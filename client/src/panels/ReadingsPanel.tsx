@@ -255,7 +255,9 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
     const handleDownloadPDF = async () => {
         if (!pdfRef.current) return;
 
-        const html2pdf = await import("html2pdf.js").then(mod => mod.default);
+        // dynamic import works with Vite
+        const html2pdfModule = await import("html2pdf.js");
+        const html2pdf = html2pdfModule.default || html2pdfModule;
 
         const opt = {
             margin: 0.5,
@@ -266,7 +268,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
         };
 
         html2pdf().set(opt).from(pdfRef.current).save();
-    };
+        };
 
 
     // Desired display order
