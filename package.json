@@ -20,16 +20,5 @@
   },
   "dependencies": {
     "@prisma/client": "^7.4.0"
-  },
-  "functions": {
-    "api/index.ts": {
-      "runtime": "nodejs"
-    }
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.ts"
-    }
-  ]
+  }
 }
