@@ -309,7 +309,9 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
                     {user !== null && (
                         <div className='readingsInputOuter'>
                             <label htmlFor="name-input">Reading Name: </label>
-                            <input id="name-input" type="text" onChange={(e) => setReadingName(e.target.value)} value={readingName} >
+                            <input id="name-input" type="text" onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                    setReadingName(e.target.value)
+                                } value={readingName} >
                             </input>
                         </div>
                     )}
