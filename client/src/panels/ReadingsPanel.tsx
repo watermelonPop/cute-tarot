@@ -255,14 +255,17 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
     const handleDownloadPDF = async () => {
         if (!pdfRef.current) return;
 
-        if (typeof window === "undefined") {
-            console.warn("html2pdf cannot run on the server");
-            return;
-        }
+        // Wait for all images inside the container to load
+        const images = Array.from(pdfRef.current.querySelectorAll('img')) as HTMLImageElement[];
+        await Promise.all(images.map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise<void>((resolve) => {
+                img.onload = img.onerror = () => resolve();
+            });
+        }));
 
-        try {
-            // Dynamically load html2pdf from CDN
-            if (!(window as any).html2pdf) {
+        // Load html2pdf if not already loaded
+        if (!(window as any).html2pdf) {
             await new Promise<void>((resolve, reject) => {
                 const script = document.createElement("script");
                 script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
@@ -270,23 +273,20 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
                 script.onerror = () => reject(new Error("Failed to load html2pdf.js"));
                 document.body.appendChild(script);
             });
-            }
+        }
 
-            const html2pdf = (window as any).html2pdf;
-
-            const options = {
+        const html2pdf = (window as any).html2pdf;
+        const options = {
             margin: 0.5,
             filename: `${readingName || "tarot-reading"}.pdf`,
             image: { type: "jpeg", quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-            };
-
-            html2pdf(pdfRef.current, options);
-        } catch (err) {
-            console.error("Failed to generate PDF:", err);
-        }
         };
+
+        html2pdf(pdfRef.current, options);
+    };
+
 
 
 
