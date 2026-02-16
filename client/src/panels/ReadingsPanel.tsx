@@ -255,7 +255,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
     const handleDownloadPDF = async () => {
         if (!pdfRef.current) return;
 
-        // Wait for all images inside the container to load
+        // Wait for all images to load
         const images = Array.from(pdfRef.current.querySelectorAll('img')) as HTMLImageElement[];
         await Promise.all(images.map(img => {
             if (img.complete) return Promise.resolve();
@@ -276,6 +276,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
         }
 
         const html2pdf = (window as any).html2pdf;
+
         const options = {
             margin: 0.5,
             filename: `${readingName || "tarot-reading"}.pdf`,
@@ -284,8 +285,12 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
             jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
         };
 
-        html2pdf(pdfRef.current, options);
+        html2pdf()
+            .set(options)
+            .from(pdfRef.current)
+            .save();
     };
+
 
 
 
