@@ -3,7 +3,6 @@ import '../App.css'
 import './panel.css'
 import './ReadingsPanel.css'
 import './RelationsPanel.css'
-import html2pdf from 'html2pdf.js';
 import Sparkles from '../components/Sparkles'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
@@ -253,8 +252,10 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
         };
 
 
-    const handleDownloadPDF = () => {
+    const handleDownloadPDF = async() => {
         if (!pdfRef.current) return;
+
+        const html2pdf = (await import('html2pdf.js')).default;
 
         const opt = {
             margin:       0.5,
