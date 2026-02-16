@@ -7,7 +7,6 @@ import Sparkles from '../components/Sparkles'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import type { User, Reading, Deck, Relation, Spread, Card, Topic, DrawingMethod, Suit } from '../types'
-import html2pdf from 'html2pdf.js';
 import { useNavigate } from 'react-router-dom'
 
 
