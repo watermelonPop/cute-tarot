@@ -3,7 +3,8 @@ import type { User, Deck } from './types'
 import RiderWaiteIcon from './assets/images/Rider-Waite/card-icon.svg?react'
 import BunnyWaiteIcon from './assets/images/Bunny-Waite/card-icon.svg?react'
 import './App.css'
-import { TokenResponse, useGoogleLogin, googleLogout } from '@react-oauth/google';
+import { useGoogleLogin, googleLogout } from '@react-oauth/google';
+import type { TokenResponse } from '@react-oauth/google';
 import CardsPanel from './panels/CardsPanel';
 import CardPanel from './panels/CardPanel';
 import RelationsPanel from './panels/RelationsPanel'
@@ -16,7 +17,8 @@ import AccountPanel from './panels/AccountPanel'
 import ReadingPanel from './panels/ReadingPanel'
 import SearchCardsPanel from './panels/SearchCardsPanel';
 import Alert from './components/Alert';
-import { useLocation, Routes, Route, NavLink, Navigate, NavLinkRenderProps } from 'react-router-dom'
+import { useLocation, Routes, Route, NavLink, Navigate } from 'react-router-dom'
+import type { NavLinkRenderProps } from 'react-router-dom'
 
 
 function App() {
