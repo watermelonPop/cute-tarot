@@ -18,12 +18,9 @@ export default defineConfig({
       '/api': 'http://localhost:3001'
     },
   },
-  optimizeDeps: {
-    include: ['html2pdf.js'], // pre-bundle this package
-  },
   build: {
     rollupOptions: {
-      plugins: [commonjs()],
+      external: ['html2pdf.js'],
     },
   },
 })

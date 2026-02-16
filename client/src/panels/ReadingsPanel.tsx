@@ -255,7 +255,11 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
     const handleDownloadPDF = async () => {
         if (!pdfRef.current) return;
 
-        // dynamic import works with Vite
+        if (typeof window === "undefined") {
+            console.warn("html2pdf cannot run on server");
+            return;
+        }
+
         const html2pdfModule = await import("html2pdf.js");
         const html2pdf = html2pdfModule.default || html2pdfModule;
 
