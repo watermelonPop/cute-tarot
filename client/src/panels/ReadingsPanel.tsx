@@ -255,16 +255,13 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
     const handleDownloadPDF = async () => {
         if (!pdfRef.current) return;
 
-        // Wait for all images to load
+        // Wait for images
         const images = Array.from(pdfRef.current.querySelectorAll('img')) as HTMLImageElement[];
-        await Promise.all(images.map(img => {
-            if (img.complete) return Promise.resolve();
-            return new Promise<void>((resolve) => {
-                img.onload = img.onerror = () => resolve();
-            });
-        }));
+        await Promise.all(images.map(img => new Promise<void>(resolve => {
+            if (img.complete) resolve();
+            else img.onload = img.onerror = () => resolve();
+        })));
 
-        // Load html2pdf if not already loaded
         if (!(window as any).html2pdf) {
             await new Promise<void>((resolve, reject) => {
                 const script = document.createElement("script");
@@ -277,18 +274,24 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
 
         const html2pdf = (window as any).html2pdf;
 
-        const options = {
-            margin: 0.5,
-            filename: `${readingName || "tarot-reading"}.pdf`,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-        };
+        const element = pdfRef.current;
+        element.style.width = '800px'; // force fixed width for html2canvas
+        element.style.maxWidth = '800px';
 
         html2pdf()
-            .set(options)
-            .from(pdfRef.current)
-            .save();
+            .set({
+                margin: 0.5,
+                filename: `${readingName || "tarot-reading"}.pdf`,
+                image: { type: "jpeg", quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: -window.scrollY },
+                jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+            })
+            .from(element)
+            .save()
+            .finally(() => {
+                element.style.width = ''; // restore original width
+                element.style.maxWidth = '';
+            });
     };
 
 
