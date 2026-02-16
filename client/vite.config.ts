@@ -22,4 +22,7 @@ export default defineConfig({
       external: ['html2pdf.js'],
     },
   },
+  optimizeDeps: {
+    include: ["html2pdf.js"],
+  },
 })

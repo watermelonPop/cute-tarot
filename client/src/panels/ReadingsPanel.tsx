@@ -255,24 +255,33 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
     const handleDownloadPDF = async () => {
         if (!pdfRef.current) return;
 
+        // Make sure we are in the browser
         if (typeof window === "undefined") {
-            console.warn("html2pdf cannot run on server");
+            console.warn("html2pdf cannot run on the server");
             return;
         }
 
-        const html2pdfModule = await import("html2pdf.js");
-        const html2pdf = html2pdfModule.default || html2pdfModule;
+        try {
+            // Dynamically import html2pdf for Vite + ESM compatibility
+            const html2pdfModule = await import("html2pdf.js");
+            const html2pdf = html2pdfModule.default || html2pdfModule;
 
-        const opt = {
+            // PDF options
+            const options: Parameters<typeof html2pdf>[0] = {
             margin: 0.5,
-            filename: `${readingName || 'tarot-reading'}.pdf`,
-            image: { type: "jpeg" as const, quality: 0.98 },
+            filename: `${readingName || "tarot-reading"}.pdf`,
+            image: { type: "jpeg", quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: "in" as const, format: "letter" as const, orientation: "portrait" as const },
+            jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+            };
+
+            // Generate and save PDF
+            html2pdf(pdfRef.current, options);
+        } catch (err) {
+            console.error("Failed to generate PDF:", err);
+        }
         };
 
-        html2pdf().set(opt).from(pdfRef.current).save();
-        };
 
 
     // Desired display order
