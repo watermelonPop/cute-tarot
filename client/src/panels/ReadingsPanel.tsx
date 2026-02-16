@@ -10,6 +10,9 @@ import type { User, Reading, Deck, Relation, Spread, Card, Topic, DrawingMethod,
 import html2pdf from 'html2pdf.js';
 import { useNavigate } from 'react-router-dom'
 
+const html2pdf = await import("html2pdf.js").then(mod => mod.default);
+
+
 interface ReadingsPanelProps {
     user: User | null
     selectedDeck: Deck | null
@@ -40,7 +43,6 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
     const navigate = useNavigate()
     const [infoModalOpen, setInfoModalOpen] = useState<boolean>(false);
     const infoModalRef = useRef<HTMLDivElement | null>(null);
-
 
     // Load all cards
     useEffect(() => {
@@ -253,26 +255,22 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
         };
 
 
-    const handleDownloadPDF = () => {
+    const handleDownloadPDF = async () => {
         if (!pdfRef.current) return;
 
+        const html2pdf = await import("html2pdf.js").then(mod => mod.default);
+
         const opt = {
-            margin:       0.5,
-            filename:     `${readingName || 'tarot-reading'}.pdf`,
+            margin: 0.5,
+            filename: `${readingName || 'tarot-reading'}.pdf`,
             image: { type: "jpeg" as const, quality: 0.98 },
-            html2canvas:  {
-            scale: 2,
-            useCORS: true, // important for card images
-            },
-            jsPDF: {
-                unit: "in" as const,
-                format: "letter" as const,
-                orientation: "portrait" as const,
-            },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: "in" as const, format: "letter" as const, orientation: "portrait" as const },
         };
 
         html2pdf().set(opt).from(pdfRef.current).save();
     };
+
 
     // Desired display order
     const suitOrder: Suit[] = [
