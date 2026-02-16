@@ -309,6 +309,54 @@ input[type="checkbox"]:not(:disabled):checked {
     color: var(--secondary-text);
 }
 
+/* PDF export styles - override dark mode */
+.outerReading.pdf-export {
+    background-color: #ffffff !important;
+}
+
+.outerReading.pdf-export,
+.outerReading.pdf-export *,
+.outerReading.pdf-export .topReadingOuter,
+.outerReading.pdf-export .topInnerReadingOuter,
+.outerReading.pdf-export .readingResultCard,
+.outerReading.pdf-export .combinedRelation {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.outerReading.pdf-export h1,
+.outerReading.pdf-export h2,
+.outerReading.pdf-export h3,
+.outerReading.pdf-export h4,
+.outerReading.pdf-export h5,
+.outerReading.pdf-export h6 {
+    color: #000000 !important;
+    background-color: transparent !important;
+}
+
+.outerReading.pdf-export .readingParagraph,
+.outerReading.pdf-export p,
+.outerReading.pdf-export li,
+.outerReading.pdf-export ul,
+.outerReading.pdf-export div {
+    color: #000000 !important;
+    background-color: transparent !important;
+}
+
+.outerReading.pdf-export .tableOfContents li {
+    cursor: default !important;
+    color: #000000 !important;
+}
+
+.outerReading.pdf-export .topReadingOuter,
+.outerReading.pdf-export .topInnerReadingOuter {
+    box-shadow: none !important;
+}
+
+/* Ensure buttons don't appear in PDF */
+.outerReading.pdf-export button {
+    display: none !important;
+}
 
 /* Phone */
 @media (max-width: 767px) {
