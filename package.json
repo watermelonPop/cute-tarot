@@ -6,17 +6,15 @@
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "seed": "npm run seed --prefix server",
-
     "prisma:generate": "prisma generate --schema=server/prisma/schema.prisma",
-
     "build:client": "npm run build --prefix client",
     "build:server": "npm run build --prefix server",
-
     "build": "npm run prisma:generate && npm run build:client && npm run build:server"
   },
   "devDependencies": {
     "concurrently": "^8.2.0",
-    "prisma": "^6.19.2"
+    "prisma": "^6.19.2",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2"
