@@ -76,6 +76,10 @@ function DecksPanel({ user, selectedDeck }: DecksPanelProps) {
                             <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
                             The currently selected deck has the check mark in the top right corner!
                         </p>
+                        <p className='infoModalPt'>
+                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
+                            I'll be adding to these decks as I collect them in real life!
+                        </p>
                     </div>
                 </div>
             </div>

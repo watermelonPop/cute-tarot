@@ -85,8 +85,8 @@
   width: 100%;
   height: auto;
   border-radius: var(--border-radius);
-  background-color: var(--main-background);
-  color: var(--main-text);
+  background-color: var(--secondary-background);
+  color: var(--secondary-text);
 }
 
 .deckHeadingBtn{

@@ -68,6 +68,10 @@ function SpreadsPanel({ user, selectedDeck }: SpreadsPanelProps) {
                             <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
                             Click on a spread to see more information in the larger Spread page.
                         </p>
+                        <p className='infoModalPt'>
+                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
+                            This is by no means an exhaustive list, there are plenty of other tarot spreads out there! These are just the easiest and most common ones I've found. 
+                        </p>
                     </div>
                 </div>
             </div>

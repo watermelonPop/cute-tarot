@@ -148,6 +148,10 @@ function CardsPanel({ user, selectedDeck, width, showAlert }: CardsPanelProps){
                             <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
                             Welcome to the Cards page! 
                         </p>
+                        <p className='infoModalPt'>
+                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
+                            Remember that tarot cards are a guide and not a strict directive or fortune teller! 
+                        </p>
                         {user !== null ? (
                             <>
                             <p className='infoModalPt'>

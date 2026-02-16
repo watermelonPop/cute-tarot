@@ -450,6 +450,10 @@ function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanel
                         </p>
                         <p className='infoModalPt'>
                             <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
+                            Accurate readings of a combination will always depend on the querent's question and the other surrounding cards. These combinations show just some of the possible interpretations. This is just a tool I made to help people learn to read!
+                        </p>
+                        <p className='infoModalPt'>
+                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
                             All card combinations have a description, but some have multiple descriptions for different subject matter.
                         </p>
                         <p className='infoModalPt'>
