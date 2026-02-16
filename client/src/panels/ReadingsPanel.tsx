@@ -255,19 +255,26 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
     const handleDownloadPDF = async () => {
         if (!pdfRef.current) return;
 
-        // Make sure we are in the browser
         if (typeof window === "undefined") {
             console.warn("html2pdf cannot run on the server");
             return;
         }
 
         try {
-            // Dynamically import html2pdf for Vite + ESM compatibility
-            const html2pdfModule = await import("html2pdf.js");
-            const html2pdf = html2pdfModule.default || html2pdfModule;
+            // Dynamically load html2pdf from CDN
+            if (!(window as any).html2pdf) {
+            await new Promise<void>((resolve, reject) => {
+                const script = document.createElement("script");
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error("Failed to load html2pdf.js"));
+                document.body.appendChild(script);
+            });
+            }
 
-            // PDF options
-            const options: Parameters<typeof html2pdf>[0] = {
+            const html2pdf = (window as any).html2pdf;
+
+            const options = {
             margin: 0.5,
             filename: `${readingName || "tarot-reading"}.pdf`,
             image: { type: "jpeg", quality: 0.98 },
@@ -275,12 +282,12 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
             jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
             };
 
-            // Generate and save PDF
             html2pdf(pdfRef.current, options);
         } catch (err) {
             console.error("Failed to generate PDF:", err);
         }
         };
+
 
 
 
