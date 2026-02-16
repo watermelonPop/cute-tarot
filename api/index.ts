@@ -1,3 +1,3 @@
-import app from "../server/index.ts"; // adjust path!
+import app from "../server/index"; // adjust path!
 
 export default app;
