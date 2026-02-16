@@ -1,0 +1,327 @@
+.relationCardIcons{
+    width: 85%;
+    background-color: var(--secondary-background);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    column-gap: 5%;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    border-radius: var(--border-radius);
+    margin-bottom: 2.5%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.relationCardImg{
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    z-index: 5;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.centerPlus{
+    font-size: 5rem;
+}
+
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 7; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  justify-content: center;
+  align-items: center;
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: var(--secondary-background);
+  padding: 20px;
+
+  width: min(90vw, 1100px);
+  max-height: 85vh;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.modal-content h2 {
+    background-color: var(--secondary-background);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding-bottom: 8px;
+  color: black;
+}
+
+
+/* The Close Button */
+.close {
+  color: var(--secondary-text);
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modalOuterCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+
+  width: 85%;
+  margin: 0 auto;
+
+  padding: 16px 16px 4rem; /* ← bottom breathing room */
+  box-sizing: border-box;
+
+  height: auto;
+}
+
+
+.modalOuterCards {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  background-color: var(--main-background);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;   /* ✅ */
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+
+.relationCardWrapper {
+  background-color: var(--accent-background);
+  width: 25%;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  z-index: 6;
+  cursor: pointer;
+  box-shadow: 0px 0px 16px 3px rgba(0,0,0,0.4);
+}
+
+.sparkleOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 4;
+  pointer-events: none;
+  animation: fadeOverlay 3s ease forwards;
+}
+
+@keyframes fadeOverlay {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.centerPlusWrapper {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* existing + */
+.centerPlus {
+  font-size: 5rem;
+  line-height: 1;
+  color: var(--secondary-text);
+}
+
+/* loader container */
+.starLoader {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  animation: spinLoader 2s linear infinite;
+}
+
+/* individual stars */
+.loaderStar {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  top: 50%;
+  left: 50%;
+  transform-origin: 0 0;
+  color: var(--accent-background);
+
+  transform:
+    rotate(calc(var(--i) * 60deg))
+    translate(26px)
+    rotate(calc(var(--i) * -60deg));
+}
+
+/* smooth infinite rotation */
+@keyframes spinLoader {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.modalCardImg {
+  width: 100%;
+  height: auto;
+  border-radius: var(--border-radius);
+}
+
+
+
+.modalCardImgOuter{
+    background-color: var(--secondary-background);
+    width: 80%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.modalCardFace {
+  height: 100%;
+  background-color: var(--accent-background);
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding-top: 2.5%;
+  padding-bottom: 2.5%;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+
+.cardBackOverlayWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.cardBackText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  color: white;
+  background: rgba(0, 0, 0, 0.45);
+
+  pointer-events: none; /* keeps card clickable */
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+
+.enterBtn{
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    font-family: "Literata", serif;
+    outline: none;
+    border: 2px solid transparent;
+    font-size: 1rem;
+    font-weight: 700;
+    background-color: var(--main-text);
+    color: var(--main-background);
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.modalCardImgBorder{
+  width: 48%;
+  height: 100%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cardEffectLayer {
+  position: relative;
+  width: 100%;
+  z-index: 6;
+}
+
+
+.modalPanelTitle{
+    margin: 0;
+    color: var(--secondary-text) !important;
+    width: 100%;
+    height: 15%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    padding-left: 0%;
+    padding-right: 0%;
+    text-align: center;
+}
+
+.relationParagraph{
+  line-height: 2;
+}
+
+/* PHONE */
+@media (max-width: 767px) {
+    .relationCardIcons{
+        background-color: transparent !important;
+        margin-bottom: 10%;
+        margin-top: 5%;
+    }
+
+    .modalOuterCardsGrid{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .modalCardImgBorder{
+        width: 100%;
+        height: auto;
+    }
+
+    .cardTitle{
+        width: 90%;
+        font-size: 1.5rem;
+    }
+
+    .cardDesc{
+        width: 90%;
+        text-align: center;
+    }
+
+    .relationCardWrapper{
+        padding: 0.5rem;
+        width: 100%;
+    }
+}

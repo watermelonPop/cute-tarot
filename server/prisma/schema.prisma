@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  picture      String?
+  readings     String[] @default([]) // list of reading ids
+  selectedDeck String //deck id
+  type         String   @default("General User")
+}
+
+model Card {
+  id            String @id @default(uuid())
+  type          String
+  value         Int
+  name          String
+  nameShort     String @unique
+  meaningUp     String
+  meaningRev    String
+  keywordsUp    String
+  keywordsRev   String
+  meaningAdvice String
+  meaningLove   String
+  meaningCareer String
+  meaningYesNo  String
+  descriptions  Json //dictionary of strings, with keys being the deck ids and the values being the description of the card for that deck
+}
+
+model Deck {
+  id          String @id @default(uuid())
+  name        String
+  description String @default("")
+  images      Json //dictionary of strings, keys are the card id, and value is the image path for that card and that deck
+  style       Json // dictionary of css vars
+}
+
+model Relation {
+  id                String    @id @default(uuid())
+  cards             String[]  //list of card ids that are related
+  description       String    //explanation of relation
+  descriptionAdvice String    @default("")
+  descriptionLove   String    @default("")
+  descriptionCareer String    @default("")
+}
+
+model Reading {
+  id             String     @id @default(uuid())
+  name           String
+  date           DateTime   @default(now())
+  cards          String[]    //list of card ids pulled in the reading in order of pull
+  reversalValues Boolean[]  @default([])
+  spread         String     // spread id
+  relations      String[]   @default([])//list of relation ids for the card combos in the cards list
+  reversals      Boolean
+  topic          String
+  notes          String     @default("")
+}
+
+model Spread {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  pulls       String[]
+  numPulls    Int
+}

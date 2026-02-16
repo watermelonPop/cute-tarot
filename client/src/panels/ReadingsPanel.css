@@ -1,0 +1,335 @@
+.readingsInfo{
+    background-color: var(--accent-background);
+    width: 85%;
+    height: fit-content;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--border-radius);
+    margin-bottom: 2.5%;
+}
+
+.readingsInfo p{
+    width: 95%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    column-gap: 2.5%;
+    color: var(--accent-text);
+}
+
+.readingsForm{
+    width: 85%;
+    height: 70%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.readingsCheckboxOuter{
+    width: 100%;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--secondary-background);
+    column-gap: 2.5%;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.readingsCheckboxOuter label{
+    font-weight: 700;
+    color: var(--secondary-text);
+}
+
+.topForm{
+    background-color: var(--secondary-background);
+    border-radius: var(--border-radius);
+    width: 100%;
+    margin-bottom: 2.5%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.readingsInputOuter{
+    width: 100%;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.readingsInputOuter label{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 2.5%;
+    padding-right: 2.5%;
+    font-weight: 700;
+    color: var(--secondary-text);
+}
+
+.readingsInputOuter select{
+    width: 50%;
+    background-color: var(--main-background);
+    color: var(--main-text);
+    padding: 0.5rem;
+    border-radius: var(--border-radius-small);
+    font-family: "Literata", serif;
+    font-size: 1rem;
+    margin-right: 2.5%;
+    margin-left: 2.5%;
+    border: none;
+}
+
+.readingsInputOuter input{
+    width: 48%;
+    background-color: var(--main-background);
+    color: var(--main-text);
+    padding: 0.5rem;
+    border-radius: var(--border-radius-small);
+    font-family: "Literata", serif;
+    font-size: 1rem;
+    margin-right: 2.5%;
+    margin-left: 2.5%;
+    border: none;
+}
+
+.checkReadingCardWrapper {
+    position: relative; /* Important: makes sparkles position absolute relative to this wrapper */
+    background-color: var(--accent-background);
+    width: 25%;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    z-index: 7;
+    overflow: visible; /* Allow sparkles to overflow if needed */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+.readingCardWrapper {
+    position: relative; /* keep relative so sparkles inside can absolutely position */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.readingCardImg{
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    z-index: 5;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.readingsCards{
+    width: 100%;
+    background-color: var(--secondary-background);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    column-gap: 5%;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    border-radius: var(--border-radius);
+}
+
+.upside-down {
+  transform: rotate(180deg);
+}
+
+.getReadingBtn{
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    font-family: "Literata", serif;
+    outline: none;
+    border: 2px solid transparent;
+    font-size: 1rem;
+    font-weight: 700;
+    background-color: var(--main-text);
+    color: var(--main-background);
+    cursor: pointer;
+    margin-bottom: 2.5%;
+}
+
+
+.outerReading{
+    padding-bottom: 5%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: var(--main-text);
+    background-color: var(--main-background);
+}
+
+.outerReading h2{
+    padding: 0;
+}
+
+.reversedInput{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+}
+
+
+input[type="checkbox"] {
+  box-sizing: border-box;
+  width: 2rem;
+  height: 2rem;
+  margin: 6px;
+  padding: 0;
+  border: 2px solid var(--secondary-text);
+  appearance: none;
+  border-radius: var(--border-radius-small);
+  background-color: transparent;
+  outline: none;
+  transition: outline 0.1s;
+}
+
+input[type="checkbox"]:checked {
+  background-size: cover;
+  padding: 2px;
+}
+
+input[type="checkbox"]:not(:disabled):checked { 
+    border-color: var(--secondary-text); 
+    background-size: cover; 
+    background-repeat: no-repeat; 
+    background-position: center; 
+    color: var(--accent-background);
+    background-image: url("data:image/svg+xml;utf8,\ <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'>\ <path fill='white' d='M93.781 51.578C95 50.969 96 49.359 96 48c0-1.375-1-2.969-2.219-3.578\ 0 0-22.868-1.514-31.781-10.422-8.915-8.91-10.438-31.781-10.438-31.781\ C50.969 1 49.375 0 48 0s-2.969 1-3.594 2.219\ c0 0-1.5 22.87-10.406 31.781-8.908 8.913-31.781 10.422-31.781 10.422\ C1 45.031 0 46.625 0 48c0 1.359 1 2.969 2.219 3.578\ 0 0 22.873 1.51 31.781 10.422 8.906 8.911 10.406 31.781 10.406 31.781\ C45.031 95 46.625 96 48 96s2.969-1 3.562-2.219\ c0 0 1.523-22.871 10.438-31.781 8.913-8.908 31.781-10.422 31.781-10.422Z'/>\ </svg>"); 
+}
+
+.readingResultCard{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 85%;
+}
+
+
+.tableOfContents li{
+    cursor: pointer;
+    color: var(--secondary-text);
+}
+
+.tableOfContents li:hover{
+    color: var(--accent-background);
+    text-shadow: 0 4px 10px rgba(0,0,0,1);
+}
+
+.readingParagraph{
+  line-height: 2;
+  width: 95%;
+}
+
+.combinedRelation{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 85%;
+}
+
+.topReadingOuter{
+    background-color: var(--secondary-background);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: var(--border-radius);
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    color: var(--secondary-text);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.topInnerReadingOuter{
+    background-color: var(--secondary-background);
+    width: 85%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: var(--border-radius);
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    color: var(--secondary-text);
+    margin-top: 2.5%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.tableContentsTitle{
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.readingPanelTitle{
+    margin: 0;
+    color: var(--main-text);
+    width: 100%;
+    height: 15%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    padding-left: 0%;
+    padding-right: 0%;
+    margin-bottom: 2.5%;
+}
+
+.editNoteBtn{
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    font-family: "Literata", serif;
+    outline: none;
+    border: 2px solid transparent;
+    font-size: 1rem;
+    font-weight: 700;
+    background-color: var(--main-text);
+    color: var(--main-background);
+    cursor: pointer;
+}
+
+.editNotesText{
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: var(--secondary-background);
+    color: var(--secondary-text);
+}
+
+
+/* Phone */
+@media (max-width: 767px) {
+    .readingsInfo{
+        margin-bottom: 5%;
+    }
+
+    .topForm{
+        margin-bottom: 5%;
+    }
+
+    .readingsCheckboxOuter{
+        margin-bottom: 2.5%;
+    }
+
+    .checkReadingCardWrapper{
+        width: 30%;
+        padding: 0.5rem;
+    }
+
+    .readingsCards{
+        background-color: transparent;
+    }
+}

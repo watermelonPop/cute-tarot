@@ -1,0 +1,116 @@
+.outerSpreadsGrid{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    row-gap: 2rem;
+
+    width: 85%;
+    margin: 0 auto;
+
+    padding: 16px 16px 4rem; /* ← bottom breathing room */
+    box-sizing: border-box;
+
+    height: auto;
+}
+
+.spreadOuter{
+    height: 100%;
+    background-color: var(--accent-background);
+    justify-content: space-evenly;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+
+.spreadImgOuter{
+    background-color: var(--secondary-background);
+    width: 80%;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.spreadImg{
+    width: 100%;
+    height: auto;
+    border-radius: var(--border-radius-small);
+    color: var(--accent-text);
+}
+
+.innerSpreadImg{
+    width: 100%;
+    height: auto;
+    border-radius: var(--border-radius-small);
+}
+
+.spreadTitle {
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 85%;
+}
+
+.spreadDesc{
+    margin: 0;
+    padding: 0;
+    font-size: 0.85rem;
+    margin: 4px 0;
+    width: 85%;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* ← same height everywhere */
+    -webkit-box-orient: vertical;
+    text-align: center;
+}
+
+.spreadImgBorder{
+    width: 30%;
+    height: 100%;
+    height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-background);
+    border-radius: var(--border-radius-small);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.spreadCardImgs{
+    width: 85%;
+    background-color: var(--secondary-background);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    column-gap: 5%;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+/* Phone */
+@media (max-width: 767px) {
+    .outerSpreadsGrid{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .spreadTitle{
+        font-size: 1.5rem;
+    }
+
+    .spreadDesc{
+        -webkit-line-clamp: 6;
+    }
+}

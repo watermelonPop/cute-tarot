@@ -1,0 +1,169 @@
+.deckCardDesc{
+    background-color: var(--accent-background);
+    width: 85%;
+    height: 10%;
+    text-align: center;
+    border-radius: var(--border-radius);
+    color: var(--accent-text);
+    margin-bottom: 2.5%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.deckCardDesc p{
+    width: 95%;
+}
+
+.outerDeckCardGrid{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+
+    width: 85%;
+    margin: 0 auto;
+
+    padding: 16px 16px 4rem; /* ← bottom breathing room */
+    box-sizing: border-box;
+
+    height: auto;
+}
+
+.topOuterDeckCardGrid{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+
+    width: 44%;
+    margin: 0 auto;
+
+    padding: 16px 16px 4rem; /* ← bottom breathing room */
+    box-sizing: border-box;
+
+    height: auto;
+    justify-content: center;
+}
+
+.topDeckCardOuter{
+    background-color: var(--accent-background);
+    border-radius: var(--border-radius);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    padding-top: 2.5%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+
+.deckCardOuter{
+    background-color: var(--accent-background);
+    border-radius: var(--border-radius);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    padding-top: 2.5%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+
+.deckCardImgOuter{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 85%;
+    height: fit-content;
+}
+
+.deckCardImg {
+  width: 100%;
+  height: auto;
+  border-radius: var(--border-radius);
+  background-color: var(--main-background);
+  color: var(--main-text);
+}
+
+.deckHeadingBtn{
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    font-family: "Literata", serif;
+    outline: none;
+    border: 2px solid transparent;
+    font-size: 1rem;
+    font-weight: 700;
+    background-color: var(--main-text);
+    color: var(--main-background);
+    cursor: pointer;
+}
+
+.unselectedBtn{
+    background-color: transparent;
+    border: solid var(--main-text);
+    color: var(--main-text);
+}
+
+.innerSuitTitle{
+    color: var(--main-text);
+    margin: 0.5rem;
+}
+
+.colorGrid{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+
+    width: 85%;
+    margin: 0 auto;
+
+    padding: 16px 16px 4rem; /* ← bottom breathing room */
+    box-sizing: border-box;
+
+    height: auto;
+    justify-content: center;
+    background-color: var(--accent-background);
+    border-radius: var(--border-radius);
+}
+
+.deckColorInput{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    row-gap: 1rem;
+}
+
+.deckColorInput label{
+    text-align: center;
+    color: var(--accent-text);
+}
+
+/* Phone */
+@media (max-width: 767px) {
+    .outerDeckCardGrid{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 95%;
+    }
+
+    .topOuterDeckCardGrid{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+
+        width: 95%;
+        margin: 0 auto;
+
+        padding: 16px 16px 4rem; /* ← bottom breathing room */
+        box-sizing: border-box;
+
+        height: auto;
+        justify-content: center;
+    }
+}

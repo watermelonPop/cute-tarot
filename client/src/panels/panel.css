@@ -1,0 +1,23 @@
+.panel {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.panelTitle{
+    margin: 0;
+    background-color: var(--main-background);
+    color: var(--main-text);
+    width: 85%;
+    height: 15%;
+    display: flex;
+    column-gap: 5%;
+    justify-content: center;
+    align-items: center;
+    padding-left: 0%;
+    padding-right: 0%;
+    text-align: center;
+}
