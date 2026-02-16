@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
+import commonjs from '@rollup/plugin-commonjs';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -19,5 +20,10 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['html2pdf.js'], // pre-bundle this package
+  },
+  build: {
+    rollupOptions: {
+      plugins: [commonjs()],
+    },
   },
 })
