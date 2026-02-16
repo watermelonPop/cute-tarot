@@ -264,7 +264,11 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
             scale: 2,
             useCORS: true, // important for card images
             },
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+            jsPDF: {
+                unit: "in" as const,
+                format: "letter" as const,
+                orientation: "portrait" as const,
+            },
         };
 
         html2pdf().set(opt).from(pdfRef.current).save();
