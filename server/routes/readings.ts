@@ -61,9 +61,10 @@ router.post('/draw', async (req, res) => {
       spreadId?: string;
       reversals?: boolean | string;
       topic?: string;
+      name?: string
     };
 
-    let { userId, spreadId, reversals, topic } = body;
+    let { userId, spreadId, reversals, topic, name } = body;
 
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
@@ -133,6 +134,7 @@ router.post('/draw', async (req, res) => {
     // Create reading
     const reading = await prisma.reading.create({
       data: {
+        name: name ?? "Untitled Reading",
         spread: spreadId!,
         reversals: !!reversals,
         topic: topic ?? '',
