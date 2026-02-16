@@ -10,8 +10,6 @@ import type { User, Reading, Deck, Relation, Spread, Card, Topic, DrawingMethod,
 import html2pdf from 'html2pdf.js';
 import { useNavigate } from 'react-router-dom'
 
-const html2pdf = await import("html2pdf.js").then(mod => mod.default);
-
 
 interface ReadingsPanelProps {
     user: User | null
