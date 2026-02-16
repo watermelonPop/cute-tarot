@@ -355,7 +355,6 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
             const contentHeight = pdfHeight - (2 * margin);
             
             // Calculate scaling based on width
-            const imgWidth = contentWidth;
             const imgHeight = (canvas.height * contentWidth) / canvas.width;
             
             // How much height fits on each page
