@@ -25,7 +25,7 @@ function MiniSpread({ selectedDeck, spread }: MiniSpreadProps) {
         }}
         >
         <div className='spreadImgOuter'>
-            {Array.from({ length: spread.numPulls }).map((_, i) => (
+            {Array.from({ length: spread.numPulls }).map((_) => (
                 <div className='spreadImgBorder'>
                     <SpreadIcon className="spreadImg"/>
                 </div>

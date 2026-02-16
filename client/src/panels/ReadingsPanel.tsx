@@ -259,7 +259,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
         const opt = {
             margin:       0.5,
             filename:     `${readingName || 'tarot-reading'}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
+            image: { type: "jpeg" as const, quality: 0.98 },
             html2canvas:  {
             scale: 2,
             useCORS: true, // important for card images
