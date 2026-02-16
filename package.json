@@ -20,5 +20,11 @@
   },
   "dependencies": {
     "@prisma/client": "^7.4.0"
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.ts"
+    }
+  ]
 }
