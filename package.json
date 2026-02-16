@@ -6,9 +6,19 @@
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "seed": "npm run seed --prefix server",
-    "build": "npm run build --prefix client && npm run build --prefix server"
+
+    "prisma:generate": "prisma generate",
+
+    "build:client": "npm run build --prefix client",
+    "build:server": "npm run build --prefix server",
+
+    "build": "npm run prisma:generate && npm run build:client && npm run build:server"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.0",
+    "prisma": "^7.4.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.4.0"
   }
 }
