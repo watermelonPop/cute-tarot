@@ -8,8 +8,7 @@
     "seed": "npm run seed --prefix server",
     "prisma:generate": "prisma generate --schema=server/prisma/schema.prisma",
     "build:client": "npm run build --prefix client",
-    "build:server": "npm run build --prefix server",
-    "build": "npm run prisma:generate && npm run build:client && npm run build:server"
+    "dev:client": "npm run dev --prefix client"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",
