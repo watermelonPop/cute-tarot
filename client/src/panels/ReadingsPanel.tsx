@@ -3,6 +3,7 @@ import '../App.css'
 import './panel.css'
 import './ReadingsPanel.css'
 import './RelationsPanel.css'
+import html2pdf from 'html2pdf.js';
 import Sparkles from '../components/Sparkles'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
@@ -252,46 +253,25 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
         };
 
 
-    const handleDownloadPDF = async () => {
+    const handleDownloadPDF = () => {
         if (!pdfRef.current) return;
 
-        // Wait for images
-        const images = Array.from(pdfRef.current.querySelectorAll('img')) as HTMLImageElement[];
-        await Promise.all(images.map(img => new Promise<void>(resolve => {
-            if (img.complete) resolve();
-            else img.onload = img.onerror = () => resolve();
-        })));
+        const opt = {
+            margin:       0.5,
+            filename:     `${readingName || 'tarot-reading'}.pdf`,
+            image: { type: "jpeg" as const, quality: 0.98 },
+            html2canvas:  {
+            scale: 2,
+            useCORS: true, // important for card images
+            },
+            jsPDF: {
+                unit: "in" as const,
+                format: "letter" as const,
+                orientation: "portrait" as const,
+            },
+        };
 
-        if (!(window as any).html2pdf) {
-            await new Promise<void>((resolve, reject) => {
-                const script = document.createElement("script");
-                script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-                script.onload = () => resolve();
-                script.onerror = () => reject(new Error("Failed to load html2pdf.js"));
-                document.body.appendChild(script);
-            });
-        }
-
-        const html2pdf = (window as any).html2pdf;
-
-        const element = pdfRef.current;
-        element.style.width = '800px'; // force fixed width for html2canvas
-        element.style.maxWidth = '800px';
-
-        html2pdf()
-            .set({
-                margin: 0.5,
-                filename: `${readingName || "tarot-reading"}.pdf`,
-                image: { type: "jpeg", quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: -window.scrollY },
-                jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-            })
-            .from(element)
-            .save()
-            .finally(() => {
-                element.style.width = ''; // restore original width
-                element.style.maxWidth = '';
-            });
+        html2pdf().set(opt).from(pdfRef.current).save();
     };
 
 
