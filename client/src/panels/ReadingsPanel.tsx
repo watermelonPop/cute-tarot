@@ -9,6 +9,12 @@ import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import type { User, Reading, Deck, Relation, Spread, Card, Topic, DrawingMethod, Suit } from '../types'
 import { useNavigate } from 'react-router-dom'
 
+// Add this type declaration at the top of your file (after imports)
+declare global {
+    interface Window {
+        html2pdf: any;
+    }
+}
 
 interface ReadingsPanelProps {
     user: User | null
@@ -16,6 +22,23 @@ interface ReadingsPanelProps {
     width: number
     showAlert: (msg: string) => void
 }
+
+// Add this helper function before your component
+const loadHtml2Pdf = (): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        // Check if already loaded
+        if (window.html2pdf) {
+            resolve(window.html2pdf);
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        script.onload = () => resolve(window.html2pdf);
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+};
 
 function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelProps) {
     const [cards, setCards] = useState<Card[]>([]);
@@ -252,27 +275,33 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
         };
 
 
-    const handleDownloadPDF = async() => {
+    // Inside your component, replace handleDownloadPDF with:
+    const handleDownloadPDF = async () => {
         if (!pdfRef.current) return;
 
-        const html2pdf = (await import('html2pdf.js')).default;
+        try {
+            const html2pdf = await loadHtml2Pdf();
 
-        const opt = {
-            margin:       0.5,
-            filename:     `${readingName || 'tarot-reading'}.pdf`,
-            image: { type: "jpeg" as const, quality: 0.98 },
-            html2canvas:  {
-            scale: 2,
-            useCORS: true, // important for card images
-            },
-            jsPDF: {
-                unit: "in" as const,
-                format: "letter" as const,
-                orientation: "portrait" as const,
-            },
-        };
+            const opt = {
+                margin:       0.5,
+                filename:     `${readingName || 'tarot-reading'}.pdf`,
+                image: { type: "jpeg" as const, quality: 0.98 },
+                html2canvas:  {
+                    scale: 2,
+                    useCORS: true, // important for card images
+                },
+                jsPDF: {
+                    unit: "in" as const,
+                    format: "letter" as const,
+                    orientation: "portrait" as const,
+                },
+            };
 
-        html2pdf().set(opt).from(pdfRef.current).save();
+            html2pdf().set(opt).from(pdfRef.current).save();
+        } catch (error) {
+            console.error('Failed to load html2pdf:', error);
+            showAlert('Failed to generate PDF. Please try again.');
+        }
     };
 
 
