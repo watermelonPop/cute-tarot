@@ -19,8 +19,8 @@ function InteractiveCard({ front, back }: InteractiveCardProps) {
     const onPointerDown = (e: React.PointerEvent) => {
         e.preventDefault()
 
-        isDragging.current = true
-        lastPos.current = { x: e.clientX, y: e.clientY }
+        isDragging.current = true;
+        lastPos.current = { x: e.clientX, y: e.clientY };
 
         // 🔥 keeps receiving move events even if finger leaves card
         (e.target as HTMLElement).setPointerCapture(e.pointerId)
