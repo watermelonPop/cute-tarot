@@ -15,11 +15,6 @@ function InteractiveCard({ front, back }: InteractiveCardProps) {
     const lightX = rotation.y * 0.5
         const lightY = rotation.x * 0.5 
 
-    const onMouseDown = (e: React.MouseEvent) => {
-        e.preventDefault() // 🔥 prevents default drag behavior
-        isDragging.current = true
-        lastPos.current = { x: e.clientX, y: e.clientY }
-    }
 
     const onPointerDown = (e: React.PointerEvent) => {
         e.preventDefault()
