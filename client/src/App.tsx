@@ -16,6 +16,7 @@ import SpreadPanel from './panels/SpreadPanel'
 import AccountPanel from './panels/AccountPanel'
 import ReadingPanel from './panels/ReadingPanel'
 import SearchCardsPanel from './panels/SearchCardsPanel';
+import PhysicalCard from './PhysicalCard'
 import Alert from './components/Alert';
 import { useLocation, Routes, Route, NavLink, Navigate } from 'react-router-dom'
 import type { NavLinkRenderProps } from 'react-router-dom'
@@ -391,6 +392,11 @@ function App() {
           <Route
             path="/readings/:readingId"
             element={<ReadingPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert}/>}
+          />
+
+          <Route
+            path="/physical/:deckName/:cardNameShort"
+            element={<PhysicalCard />}
           />
         </Routes>
       </div>
