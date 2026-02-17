@@ -838,7 +838,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
             <div className="modal" ref={modalRef}>
                 <div className="modal-content">
                     <span className="close" onClick={()=>setModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Choose Card for Relation</h2>
+                    <h2 className='modalPanelTitle'>Choose Card for Reading</h2>
                     <div className='modalOuterCards'>
                         {groupedCards.map((group) =>
                             group.cards.length > 0 ? (
@@ -857,13 +857,6 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
                                                 }}
                                             >
                                                 <div className='modalCardImgOuter'>
-                                                    <div className='modalCardImgBorder'>
-                                                        <img
-                                                            src={`${selectedDeck?.images['card-front']}/${card?.type.replaceAll(" ", "")}/${card.nameShort}.png`}
-                                                            className="modalCardImg"
-                                                            alt={`${card.name}`}
-                                                        />
-                                                    </div>
                                                     {width >= 400 && (
                                                         <div className='modalCardImgBorder'>
                                                             <img
@@ -873,6 +866,13 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
                                                             />
                                                         </div>
                                                     )}
+                                                    <div className='modalCardImgBorder'>
+                                                        <img
+                                                            src={`${selectedDeck?.images['card-front']}/${card?.type.replaceAll(" ", "")}/${card.nameShort}.png`}
+                                                            className="modalCardImg"
+                                                            alt={`${card.name}`}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <h3 className="cardTitle">{card.name}</h3>
                                                 <p className="cardDesc">

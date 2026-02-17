@@ -1,0 +1,78 @@
+
+
+.physCardOuter{
+    background-color: lightblue;
+    position: fixed;       /* Stays fixed relative to the viewport */
+    top: 0;                /* Start at the top */
+    left: 0;               /* Start at the left */
+    width: 100vw;          /* Full viewport width */
+    height: 100vh;         /* Full viewport height */
+    z-index: 100;
+    overflow-y: scroll;
+}
+
+.physImgsOuter{
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.physImgOuter{
+    background-color: blueviolet;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 45%;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    border-radius: var(--border-radius);
+}
+
+.physCardImg{
+    width: 85%;
+    height: auto;
+    border-radius: var(--border-radius);
+}
+
+.physInfoDiv{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.physCardParagraph{
+    width: 85%;
+}
+
+.physViewBtn{
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    font-family: "Literata", serif;
+    outline: none;
+    border: 2px solid transparent;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+
+/* ===== MODAL ===== */
+
+.cardModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  row-gap: 5%;
+}
+
+.card3dScene {
+  perspective: 2000px;
+}
+

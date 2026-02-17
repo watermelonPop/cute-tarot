@@ -5,7 +5,7 @@ import type { User, Deck, Card } from '../types'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-
+import InteractiveCard from '../components/InteractiveCard';
 
 interface CardPanelProps {
   user: User | null
@@ -22,6 +22,7 @@ function CardPanel({ user, selectedDeck, showAlert }: CardPanelProps){
     const [adminEditing, setAdminEditing] = useState<boolean>(false);
 
     const [editableCard, setEditableCard] = useState<Card | null>(null);
+    const [showModal, setShowModal] = useState(false)
 
     // Load all cards
     useEffect(() => {
@@ -139,6 +140,9 @@ function CardPanel({ user, selectedDeck, showAlert }: CardPanelProps){
                                         alt={`Deck card ${currentCard?.name}`}
                                     />
                                 </div>
+                            </div>
+                            <div className='outerEditBtn'>
+                                <button className='backBtn' onClick={()=>setShowModal(true)}>Inspect</button>
                             </div>
                             {
                                 user?.type === "Admin" && (
@@ -335,6 +339,23 @@ function CardPanel({ user, selectedDeck, showAlert }: CardPanelProps){
                     </div>
                 </div>
             </div>
+            {showModal && (
+                <div className="cardModal">
+                    <div
+                    className="card3dScene"
+                    onClick={(e) => e.stopPropagation()}
+                    >
+                    <InteractiveCard
+                        front={`${selectedDeck?.images['card-front']}/${currentCard?.type.replaceAll(" ", "")}/${currentCard?.nameShort}.png`}
+                        back={`${selectedDeck?.images['card-back']}`}
+                    />
+                    </div>
+                    <button className='physViewBtn' onClick={() => setShowModal(false)} style={{
+                        backgroundColor: selectedDeck?.style['accent-background'],
+                        color: selectedDeck?.style['accent-text']
+                    }}>Close</button>
+                </div>
+            )}
         </>
     )
 }

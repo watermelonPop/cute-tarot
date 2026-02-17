@@ -404,13 +404,6 @@ function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanel
                                                 }}
                                             >
                                                 <div className='modalCardImgOuter'>
-                                                    <div className='modalCardImgBorder'>
-                                                        <img
-                                                            src={`${selectedDeck?.images['card-front']}/${card?.type.replaceAll(" ", "")}/${card.nameShort}.png`}
-                                                            className="modalCardImg"
-                                                            alt={`${card.name}`}
-                                                        />
-                                                    </div>
                                                     {width >= 400 && (
                                                         <div className='modalCardImgBorder'>
                                                             <img
@@ -420,6 +413,13 @@ function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanel
                                                             />
                                                         </div>
                                                     )}
+                                                    <div className='modalCardImgBorder'>
+                                                        <img
+                                                            src={`${selectedDeck?.images['card-front']}/${card?.type.replaceAll(" ", "")}/${card.nameShort}.png`}
+                                                            className="modalCardImg"
+                                                            alt={`${card.name}`}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <h3 className="cardTitle">{card.name}</h3>
                                                 <p className="cardDesc">

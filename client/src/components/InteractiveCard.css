@@ -1,0 +1,104 @@
+/* ===== INTERACTIVE CARD ===== */
+
+.card3dWrapper,
+.card3dWrapper * {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.card3dWrapper {
+  width: 320px;
+  height: 520px;
+  cursor: grab;
+  user-select: none;
+}
+
+.card3dWrapper:active {
+  cursor: grabbing;
+}
+
+.card3d {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.05s linear;
+}
+
+/* ===== CARD SIDES ===== */
+
+.physCardFace {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+}
+
+.physCardFace img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+
+.physCardFront {
+  transform: translateZ(1px);
+}
+
+.physCardBack {
+  transform: rotateY(180deg);
+}
+
+
+.cardEdge {
+  position: absolute;
+  background: #222;
+}
+
+.edgeTop,
+.edgeBottom {
+  width: 100%;
+  height: 6px;
+  left: 0;
+}
+
+.edgeTop {
+  top: 0;
+  transform: rotateX(90deg) translateZ(3px);
+}
+
+.edgeBottom {
+  bottom: 0;
+  transform: rotateX(-90deg) translateZ(3px);
+}
+
+.edgeLeft,
+.edgeRight {
+  width: 6px;
+  height: 100%;
+  top: 0;
+}
+
+.edgeLeft {
+  left: 0;
+  transform: rotateY(-90deg) translateZ(3px);
+}
+
+.edgeRight {
+  right: 0;
+  transform: rotateY(90deg) translateZ(3px);
+}
+
+.cardLight {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
