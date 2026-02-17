@@ -4,13 +4,16 @@ import './PhysicalCard.css'
 import InteractiveCard from './components/InteractiveCard'
 import type {Deck, Card} from './types'
 import { useParams } from 'react-router-dom'
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from 'react-router-dom'
 
 function PhysicalCard() {
     const [decks, setDecks] = useState<Deck[]>([]);
     const [cards, setCards] = useState<Card[]>([]);
     const { deckName, cardNameShort } = useParams();
     const [showModal, setShowModal] = useState(false)
+    const navigate = useNavigate();
 
 
     useEffect(() => {
@@ -56,16 +59,29 @@ function PhysicalCard() {
                     </div>
                 </div>
                 <div className='physInfoDiv'>
-                    <button
-                        className='physViewBtn'
-                        style={{
-                            backgroundColor: currentDeck?.style['accent-background'],
-                            color: currentDeck?.style['accent-text']
-                        }}
-                        onClick={() => setShowModal(true)}
-                        >
-                        View
-                    </button>
+                    <div className='physViewBtnOuter'>
+                        <button
+                            className='physViewBtn'
+                            style={{
+                                backgroundColor: currentDeck?.style['accent-background'],
+                                color: currentDeck?.style['accent-text']
+                            }}
+                            onClick={() => setShowModal(true)}
+                            >
+                            Inspect
+                        </button>
+                        <button
+                            className='physViewBtn'
+                            style={{
+                                backgroundColor: currentDeck?.style['accent-background'],
+                                color: currentDeck?.style['accent-text']
+                            }}
+                            onClick={() => navigate(`/cards/${currentCard?.nameShort}`)}
+                            >
+                            View
+                            <FontAwesomeIcon icon={faArrowUpRightFromSquare}></FontAwesomeIcon>
+                        </button>
+                    </div>
                     <p>{currentCard?.value} - {currentCard?.type}</p>
                     <h3>Keywords</h3>
                     <p className='physCardParagraph'>Upright: {currentCard?.keywordsUp}</p>

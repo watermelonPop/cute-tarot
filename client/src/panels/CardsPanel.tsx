@@ -165,7 +165,7 @@ function CardsPanel({ user, selectedDeck, width, showAlert }: CardsPanelProps){
                             <p className='infoModalPt'>
                                 <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
                                 This page displays all tarot cards in the selected deck by suit, sorted by value. 
-                                You are not logged in, so the selected deck will be the Rider-Waite Deck. Log in to select a different deck.
+                                The default selected deck is the Rider-Waite Deck. Go to the decks page to select and browse using a different deck. You're logged out, so this selection only lasts until you refresh!
                             </p> 
                             </>
                         )}

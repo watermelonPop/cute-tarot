@@ -360,6 +360,11 @@ function App() {
           />
 
           <Route
+            path="/relations/:nameShort1"
+            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} />}
+          />
+
+          <Route
             path="/relations/:nameShort1/:nameShort2"
             element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert}/>}
           />

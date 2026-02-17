@@ -204,6 +204,11 @@
 .outerEditBtn{
   padding-top: 1rem;
   padding-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  column-gap: 5%;
+  width: 100%;
 }
 
 /* PHONE */

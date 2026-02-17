@@ -64,12 +64,12 @@ function DecksPanel({ user, selectedDeck }: DecksPanelProps) {
                         {user === null ? (
                             <p className='infoModalPt'>
                                 <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                Each deck has a back, icon, and site theme! But only logged in users can select a deck other than Rider-Waite. Log in now to select a different deck and theme.
+                                Each deck has a back, icon, and site theme! Anyone can select a different deck and browse the page using it. But only logged in users can save this selection. You're not logged in, so your selection will disappear after refresh!
                             </p>
                         ):(
                             <p className='infoModalPt'>
                                 <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                Each deck has a back, icon, and site theme! You're logged in, so just click a deck, click select and see the change!
+                                Each deck has a back, icon, and site theme! You're logged in, so just click a deck, click select and see the change! The selection will be automatically applied to your account.
                             </p>
                         )}
                         <p className='infoModalPt'>

@@ -913,6 +913,15 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
                             <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
                             Cards can have different meanings if reversed. Choose whether reversals are allowed in this reading using the checkbox.
                         </p>
+                        <p className='infoModalPt'>
+                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
+                            Click download at the bottom of your reading to download as a pdf!
+                        </p> 
+                        <p className='infoModalPt'>
+                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
+                            This reading uses cards from the currently selected deck.
+                            The default selected deck is the Rider-Waite Deck. You are logged in, go to the Decks page to select a different deck.
+                        </p> 
 
                         {user !== null ? (
                             <>
@@ -920,26 +929,12 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
                                 <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
                                 You're logged in! Any readings you create here will be automatically saved to your account! Go to the account page to view past readings, and keep notes on them!
                             </p> 
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                Click download at the bottom of your reading to download as a pdf!
-                            </p> 
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                This reading uses cards from the currently selected deck.
-                                The default selected deck is the Rider-Waite Deck. You are logged in, go to the Decks page to select a different deck.
-                            </p> 
                             </>
                         ):(
                             <>
                             <p className='infoModalPt'>
                                 <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
                                 Anyone can create new readings and download them as PDFs, but only logged in users can save them to their account! You are not logged in. Go log in to save, view, and keep notes on your readings! 
-                            </p> 
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                This reading uses cards from the currently selected deck.
-                                You are not logged in, so the selected deck will be the Rider-Waite Deck. Log in and head to the Decks page to select a different deck!
                             </p> 
                             </>
                         )}

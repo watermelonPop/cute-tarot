@@ -57,25 +57,33 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert }: DeckPanel
 
 
     const setUserSelectedDeck = async (deckId: string) => {
-        if(user === null){
+        /*if(user === null){
             showAlert("Cannot set decks when logged out.");
             return;
+        }*/
+        if(user !== null){
+            await fetch('/api/users/setDeck', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user.id,
+                    deckId
+                }),
+            });
+
+            // fetch the full deck object
+            const deckRes = await fetch(`/api/decks/${deckId}`);
+            const fullDeck = await deckRes.json();
+
+            setSelectedDeck(fullDeck);
+        }else{
+            showAlert("You're logged out, this selection will disappear when you refresh!");
+
+            const deckRes = await fetch(`/api/decks/${deckId}`);
+            const fullDeck = await deckRes.json();
+
+            setSelectedDeck(fullDeck);
         }
-        
-        await fetch('/api/users/setDeck', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: user.id,
-                deckId
-            }),
-        });
-
-        // fetch the full deck object
-        const deckRes = await fetch(`/api/decks/${deckId}`);
-        const fullDeck = await deckRes.json();
-
-        setSelectedDeck(fullDeck);
     }
 
     const currentDeck = deckName ? decks.find(c => c.name === deckName) : null
@@ -313,7 +321,7 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert }: DeckPanel
                             <>
                             <p className='infoModalPt'>
                                 <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                You are not logged in, so the selected deck will be the Rider-Waite Deck. Log in to select a different deck.
+                                The default selected deck is the Rider-Waite Deck. Click select to equip this deck & theme! You're not logged in, so your selection will only last until refresh!
                             </p> 
                             </>
                         )}

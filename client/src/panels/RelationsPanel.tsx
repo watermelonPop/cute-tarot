@@ -40,15 +40,22 @@ function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanel
     useEffect(() => {
         if (cards.length === 0) return;
 
+        // Always reset first
+        let card1: Card | null = null;
+        let card2: Card | null = null;
+
         if (nameShort1) {
-            const card1 = cards.find(c => c.nameShort === nameShort1);
-            setFirstCard(card1 || null);
+            card1 = cards.find(c => c.nameShort === nameShort1) || null;
         }
+
         if (nameShort2) {
-            const card2 = cards.find(c => c.nameShort === nameShort2);
-            setSecondCard(card2 || null);
+            card2 = cards.find(c => c.nameShort === nameShort2) || null;
         }
+
+        setFirstCard(card1);
+        setSecondCard(card2);
     }, [cards, nameShort1, nameShort2]);
+
 
     
     useEffect(() => {

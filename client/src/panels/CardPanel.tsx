@@ -143,6 +143,7 @@ function CardPanel({ user, selectedDeck, showAlert }: CardPanelProps){
                             </div>
                             <div className='outerEditBtn'>
                                 <button className='backBtn' onClick={()=>setShowModal(true)}>Inspect</button>
+                                <button className='backBtn' onClick={() => navigate(`/relations/${currentCard?.nameShort}`)}>Search Relations</button>
                             </div>
                             {
                                 user?.type === "Admin" && (
@@ -321,18 +322,26 @@ function CardPanel({ user, selectedDeck, showAlert }: CardPanelProps){
                             This page shows the back and front side of {currentCard?.name} for the selected deck,
                             as well as detailed information including the keywords, description, and various meanings. 
                         </p>
+                        <p className='infoModalPt'>
+                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
+                            Click the inspect button to view a draggable 3d version of the card. 
+                        </p>
+                        <p className='infoModalPt'>
+                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
+                            Click the Search Relations button to go to the relations generator with {currentCard?.name} already selected.
+                        </p>
                         {user !== null ? (
                             <>
                             <p className='infoModalPt'>
                                 <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                The default selected deck is the Rider-Waite Deck. You are logged in, go to the decks page to select a different deck!
+                                The default selected deck is the Rider-Waite Deck. You are logged in, go to the decks page to select a different deck for your account!
                             </p> 
                             </>
                         ):(
                             <>
                             <p className='infoModalPt'>
                                 <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                You are not logged in, so the selected deck will be the Rider-Waite Deck. Log in to select a different deck.
+                                The default selected deck is the Rider-Waite Deck. Go to the decks page to select and browse using a different deck. You're logged out, so this selection only lasts until you refresh!
                             </p> 
                             </>
                         )}
