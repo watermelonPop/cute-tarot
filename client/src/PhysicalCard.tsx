@@ -1,16 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import './PhysicalCard.css'
 import InteractiveCard from './components/InteractiveCard'
 import type {Deck, Card} from './types'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 
-interface PhysicalCardProps {
-    showAlert: (msg: string) => void
-}
-
-function PhysicalCard({ showAlert }: PhysicalCardProps) {
+function PhysicalCard() {
     const [decks, setDecks] = useState<Deck[]>([]);
     const [cards, setCards] = useState<Card[]>([]);
     const { deckName, cardNameShort } = useParams();
