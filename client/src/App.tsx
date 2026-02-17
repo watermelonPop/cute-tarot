@@ -396,7 +396,7 @@ function App() {
 
           <Route
             path="/physical/:deckName/:cardNameShort"
-            element={<PhysicalCard showAlert={showAlert}/>}
+            element={<PhysicalCard />}
           />
         </Routes>
       </div>
