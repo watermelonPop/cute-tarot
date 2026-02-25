@@ -3,6 +3,7 @@
   "short_name": "Tarot",
   "start_url": "/",
   "display": "standalone",
+  "scope": "/",
   "background_color": "#231942",
   "theme_color": "#231942",
   "icons": [
