@@ -242,7 +242,7 @@ function App() {
       />
     )}
     {loading && (
-      <Loader setLoading={setLoading}/>
+      <Loader/>
     )}
       <div className='header'>
         <HeaderIcon className="logo" />

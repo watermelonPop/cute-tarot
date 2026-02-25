@@ -1,11 +1,6 @@
-import { useEffect } from 'react'
 import './Loader.css'
 
-interface LoaderProps {
-    setLoading: (loading: boolean) => void
-}
-
-export default function Loader({ setLoading }: LoaderProps) {
+export default function Loader() {
 
   return (
     <div className='loaderBackground'>
