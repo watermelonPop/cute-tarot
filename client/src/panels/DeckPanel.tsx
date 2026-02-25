@@ -15,9 +15,11 @@ interface DeckPanelProps {
   selectedDeck: Deck | null
   setSelectedDeck: (deck: Deck) => void
   showAlert: (msg: string) => void
+  setLoading: (loading: boolean) => void
+    token: string | null
 }
 
-function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert }: DeckPanelProps) {
+function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert, setLoading, token }: DeckPanelProps) {
     const [cards, setCards] = useState<Card[]>([])
     const [decks, setDecks] = useState<Deck[]>([])
     const { deckName } = useParams()
@@ -29,20 +31,27 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert }: DeckPanel
     const [editableDeck, setEditableDeck] = useState<Deck | null>(null);
 
     useEffect(() => {
+        setLoading(true);
         fetch('/api/decks')
             .then(res => res.json())
             .then((data: Deck[]) => {
                 setDecks(data);
+                fetch('/api/cards')
+                .then(res => res.json())
+                .then((data: Card[]) => {
+                    setCards(data);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error('Failed to fetch cards:', err);
+                    setLoading(false);
+                })
             })
-            .catch(err => console.error('Failed to fetch decks:', err));
+            .catch(err => {
+                console.error('Failed to fetch decks:', err);
+                setLoading(false);
+            });
     }, []);
-
-    useEffect(() => {
-        fetch('/api/cards')
-        .then(res => res.json())
-        .then((data: Card[]) => setCards(data))
-        .catch(err => console.error('Failed to fetch cards:', err))
-    }, [])
 
     useEffect(() => {
         if(infoModalRef.current === null){
@@ -57,34 +66,42 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert }: DeckPanel
 
 
     const setUserSelectedDeck = async (deckId: string) => {
-        /*if(user === null){
-            showAlert("Cannot set decks when logged out.");
-            return;
-        }*/
-        if(user !== null){
-            await fetch('/api/users/setDeck', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user.id,
-                    deckId
-                }),
-            });
-
-            // fetch the full deck object
-            const deckRes = await fetch(`/api/decks/${deckId}`);
-            const fullDeck = await deckRes.json();
-
-            setSelectedDeck(fullDeck);
-        }else{
+        if (!user || !token) {
             showAlert("You're logged out, this selection will disappear when you refresh!");
 
             const deckRes = await fetch(`/api/decks/${deckId}`);
             const fullDeck = await deckRes.json();
-
             setSelectedDeck(fullDeck);
+            return;
         }
-    }
+
+        try {
+            const res = await fetch('/api/users/setDeck', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`  // 🔥 REQUIRED
+            },
+            body: JSON.stringify({
+                userId: user.id,   // must match JWT userId
+                deckId
+            }),
+            });
+
+            if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || "Failed to set deck");
+            }
+
+            const deckRes = await fetch(`/api/decks/${deckId}`);
+            const fullDeck = await deckRes.json();
+            setSelectedDeck(fullDeck);
+
+        } catch (err) {
+            console.error("Set deck failed:", err);
+            showAlert("Failed to save deck selection.");
+        }
+    };
 
     const currentDeck = deckName ? decks.find(c => c.name === deckName) : null
 
@@ -109,7 +126,7 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert }: DeckPanel
         try {
             const res = await fetch(`/api/decks/${currentDeck?.id}/updateDeck`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ 
                     description: editableDeck?.description,
                     style: editableDeck?.style

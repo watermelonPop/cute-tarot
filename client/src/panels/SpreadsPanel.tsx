@@ -9,21 +9,23 @@ import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 
 interface SpreadsPanelProps {
     user: User | null
-    selectedDeck: Deck | null;
+    selectedDeck: Deck | null
+    setLoading: (loading: boolean) => void
 }
 
-function SpreadsPanel({ user, selectedDeck }: SpreadsPanelProps) {
+function SpreadsPanel({ user, selectedDeck, setLoading }: SpreadsPanelProps) {
     const [spreads, setSpreads] = useState<Spread[]>([]);
     const [infoModalOpen, setInfoModalOpen] = useState<boolean>(false);
     const infoModalRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
+        setLoading(true);
         fetch('/api/spreads')
         .then(res => res.json())
-        .then(data => 
-            {console.log(data);
-            setSpreads(data);}
-        )
+        .then(data => {
+            setSpreads(data);
+            setLoading(false);
+        })
     }, []);
 
     useEffect(() => {

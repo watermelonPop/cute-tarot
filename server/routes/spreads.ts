@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
+import { verifyJWT, attachUser, requireAdmin } from '../src/middleware/auth.js'
 
 const router = Router()
 
@@ -47,31 +48,35 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/spreads/:id/updateSpread
-router.post('/:spreadId/updateSpread', async (req, res) => {
-  const { spreadId } = req.params;
-  try {
-    const { description } = req.body;
+router.post(
+  '/:spreadId/updateSpread',
+  verifyJWT,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { spreadId } = req.params as { spreadId: string };
+      const { description } = req.body as { description?: string };
 
-    const spread = await prisma.spread.findUnique({
-      where: { id: spreadId },
-    });
+      const updatedSpread = await prisma.spread.update({
+        where: { id: spreadId },
+        data: {
+          description,
+        },
+      });
 
-    if (!spread) {
-      return res.status(404).json({ error: 'spread not found' });
+      res.status(200).json(updatedSpread);
+    } catch (err: any) {
+      if (err.code === 'P2025') {
+        return res.status(404).json({ error: 'Spread not found' });
+      }
+
+      console.error(
+        `POST /api/spreads/${req.params.spreadId}/updateSpread failed:`,
+        err
+      );
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    const updatedSpread = await prisma.spread.update({
-      where: { id: spreadId },
-      data: { 
-        description, 
-      },
-    });
-
-    res.status(200).json(updatedSpread);
-  } catch (err) {
-    console.error('POST /api/spreads/:id/updateSpread failed:', err);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);
 
 export default router

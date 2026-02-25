@@ -13,10 +13,12 @@ interface RelationsPanelProps {
     selectedDeck: Deck | null
     width: number
     showAlert: (msg: string) => void
+    setLoading: (loading: boolean) => void
+    token: string | null
 }
 
 
-function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanelProps) {
+function RelationsPanel({ user, selectedDeck, width, showAlert, setLoading, token }: RelationsPanelProps) {
     const [firstCard, setFirstCard] = useState<Card | null>(null);
     const [secondCard, setSecondCard] = useState<Card | null>(null);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
@@ -57,15 +59,7 @@ function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanel
     }, [cards, nameShort1, nameShort2]);
 
 
-    
-    useEffect(() => {
-        fetch('/api/cards')
-        .then(res => res.json())
-        .then(data => 
-            {console.log(data);
-            setCards(data);}
-        )
-    }, []);
+
 
     useEffect(() => {
         if(modalRef.current === null){
@@ -102,7 +96,21 @@ function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanel
     }, [firstCard, secondCard]);
 
     useEffect(() => {
-        if (!firstCard || !secondCard) return;
+        setLoading(true);
+        fetch('/api/cards')
+        .then(res => res.json())
+        .then(data => {
+            setCards(data);
+            setLoading(false);
+        })
+    }, []);
+
+    useEffect(() => {
+
+        if (!firstCard || !secondCard){
+
+            return;
+        }
 
         // Only fetch if currentRelation is null to prevent double fetching
         if (!currentRelation) {
@@ -115,8 +123,12 @@ function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanel
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 return res.json();
             })
-            .then(data => setCurrentRelation(data.relations[0]))
-            .catch(err => console.error('Error fetching relation:', err));
+            .then(data => {
+                setCurrentRelation(data.relations[0]);
+            })
+            .catch(err => {
+                console.error('Error fetching relation:', err);
+            });
         }
     }, [firstCard, secondCard]);
 
@@ -223,7 +235,7 @@ function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanel
     };
 
     const handleSaveEdits = async () => {
-        if(user?.type !== "Admin" || adminEditing === false || !editableRelation?.id){
+        if(user?.type !== "Admin" || adminEditing === false || !editableRelation?.id || !token){
             showAlert("Not authorized for editing.");
             return;
         }
@@ -231,7 +243,7 @@ function RelationsPanel({ user, selectedDeck, width, showAlert }: RelationsPanel
         try {
             const res = await fetch(`/api/relations/${editableRelation?.id}/updateRelation`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     description: editableRelation.description, 
                     descriptionAdvice: editableRelation.descriptionAdvice, 

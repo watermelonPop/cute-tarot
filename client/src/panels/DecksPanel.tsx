@@ -9,19 +9,25 @@ import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 interface DecksPanelProps {
   user: User | null
   selectedDeck: Deck | null
+  setLoading: (loading: boolean) => void
 }
 
-function DecksPanel({ user, selectedDeck }: DecksPanelProps) {
+function DecksPanel({ user, selectedDeck, setLoading }: DecksPanelProps) {
     const [decks, setDecks] = useState<Deck[]>([]);
     const [infoModalOpen, setInfoModalOpen] = useState<boolean>(false);
     const infoModalRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {
+        setLoading(true);
         fetch('/api/decks')
             .then(res => res.json())
             .then((data: Deck[]) => {
                 setDecks(data);
+                setLoading(false);
             })
-            .catch(err => console.error('Failed to fetch decks:', err));
+            .catch(err => {
+                console.error('Failed to fetch decks:', err);
+                setLoading(false);
+            });
     }, []);
 
     useEffect(() => {

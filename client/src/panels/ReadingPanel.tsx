@@ -8,9 +8,11 @@ interface ReadingPanelProps {
   user: User | null
   selectedDeck: Deck | null
   showAlert: (msg: string) => void
+  setLoading: (loading: boolean) => void
+    token: string | null
 }
 
-function ReadingPanel({ user, selectedDeck, showAlert }: ReadingPanelProps) {
+function ReadingPanel({ user, selectedDeck, showAlert, setLoading, token }: ReadingPanelProps) {
     const [reading, setReading] = useState<Reading | null>(null);
     const [relations, setRelations] = useState<Relation[]>([]);
     const [cards, setCards] = useState<Card[]>([]);
@@ -22,43 +24,61 @@ function ReadingPanel({ user, selectedDeck, showAlert }: ReadingPanelProps) {
 
     // Load all cards
     useEffect(() => {
+        setLoading(true);
         fetch('/api/cards')
         .then(res => res.json())
-        .then((data: Card[]) => setCards(data))
-        .catch(err => console.error('Failed to fetch cards:', err))
-    }, [])
+        .then((data: Card[]) => {
+            setCards(data);
+            fetch('/api/spreads')
+            .then(res => res.json())
+            .then((data: Spread[]) => {
+                setSpreads(data);
+                fetch('/api/relations')
+                .then(res => res.json())
+                .then((data: Relation[]) => {
+                    setRelations(data);
+                    if (!token) {
+                        console.error("No token found");
+                        return;
+                    }
+                    fetch(`/api/readings/${readingId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        })
+                        .then(async res => {
+                            if (!res.ok) {
+                            const err = await res.json().catch(() => null);
+                            throw new Error(err?.error || 'Failed to fetch reading');
+                            }
+                            return res.json();
+                        })
+                        .then((data: Reading) => {
+                            setReading(data);
 
-    useEffect(() => {
-        fetch('/api/spreads')
-        .then(res => res.json())
-        .then((data: Spread[]) => setSpreads(data))
-        .catch(err => console.error('Failed to fetch spreads:', err))
-    }, [])
+                            if (data?.notes) {
+                            setEditedNotes(data.notes);
+                            }
 
-    useEffect(() => {
-        fetch('/api/relations')
-        .then(res => res.json())
-        .then((data: Relation[]) => setRelations(data))
-        .catch(err => console.error('Failed to fetch relations:', err))
-    }, [])
-
-    useEffect(() => {
-        fetch(`/api/readings/${readingId}`)
-        .then(res => res.json())
-        .then((data: Reading) => {
-            setReading(data);
-            if(data?.notes){
-                setEditedNotes(data.notes);
-            }
+                            setLoading(false);
+                        })
+                        .catch(err => {
+                            console.error('Failed to fetch reading:', err);
+                            setLoading(false);
+                        });
+                })
+                .catch(err => console.error('Failed to fetch relations:', err))
+            })
+            .catch(err => console.error('Failed to fetch spreads:', err))
         })
-        .catch(err => console.error('Failed to fetch reading:', err))
+        .catch(err => console.error('Failed to fetch cards:', err))
     }, [])
 
     const handleSaveNotes = async (newNotes: string) => {
         try {
             const res = await fetch(`/api/readings/${readingId}/updateNotes`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json',  'Authorization': `Bearer ${token}` },
             body: JSON.stringify({
                 notes: newNotes,
             }),

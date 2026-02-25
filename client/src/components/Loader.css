@@ -1,0 +1,50 @@
+.loaderBackground{
+    position: fixed; /* Stay in place */
+    z-index: 75; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+/* loader container */
+.starLoader {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  animation: spinLoader 2s linear infinite;
+}
+
+/* individual stars */
+.loaderStar {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+
+  top: 50%;
+  left: 50%;
+
+  color: var(--accent-background);
+
+  /* 👇 This is the critical fix */
+  transform:
+    translate(-50%, -50%)
+    rotate(calc(var(--i) * 60deg))
+    translate(26px);
+}
+@keyframes spinLoader {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

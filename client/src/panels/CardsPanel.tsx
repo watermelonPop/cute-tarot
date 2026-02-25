@@ -14,9 +14,10 @@ interface CardsPanelProps {
   selectedDeck: Deck | null
   width: number
   showAlert: (msg: string) => void
+  setLoading: (loading: boolean) => void
 }
 
-function CardsPanel({ user, selectedDeck, width, showAlert }: CardsPanelProps){
+function CardsPanel({ user, selectedDeck, width, showAlert, setLoading }: CardsPanelProps){
     const [cards, setCards] = useState<Card[]>([]);
     const [searchText, setSearchText] = useState<string>("");
     const [suitFilter, setSuitFilter] = useState<Suit>('Any');
@@ -26,10 +27,17 @@ function CardsPanel({ user, selectedDeck, width, showAlert }: CardsPanelProps){
 
     // Load all cards
     useEffect(() => {
+        setLoading(true);
         fetch('/api/cards')
         .then(res => res.json())
-        .then((data: Card[]) => setCards(data))
-        .catch(err => console.error('Failed to fetch cards:', err))
+        .then((data: Card[]) => {
+            setCards(data);
+            setLoading(false);
+        })
+        .catch(err => {
+            console.error('Failed to fetch cards:', err)
+            setLoading(false);
+        })
     }, [])
 
     useEffect(() => {

@@ -21,6 +21,8 @@ interface ReadingsPanelProps {
     selectedDeck: Deck | null
     width: number
     showAlert: (msg: string) => void
+    setLoading: (loading: boolean) => void
+    token: string | null
 }
 
 // Update the loader function
@@ -58,7 +60,7 @@ const loadPdfLibraries = (): Promise<any> => {
     });
 };
 
-function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelProps) {
+function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token }: ReadingsPanelProps) {
     const [cards, setCards] = useState<Card[]>([]);
     const [spreads, setSpreads] = useState<Spread[]>([]);
     const [drawingMethod, setDrawingMethod] = useState<DrawingMethod>('Manual');
@@ -84,22 +86,26 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
 
     // Load all cards
     useEffect(() => {
+        setLoading(true);
         fetch('/api/cards')
         .then(res => res.json())
-        .then((data: Card[]) => setCards(data))
-        .catch(err => console.error('Failed to fetch cards:', err))
+        .then((data: Card[]) => {
+            setCards(data);
+            fetch('/api/spreads')
+            .then(res => res.json())
+            .then((data: Spread[]) => {
+                setSpreads(data);
+                if (data.length > 0) {
+                    setSelectedSpreadId(data[0].id);
+                }
+                setLoading(false);
+            });
+        })
+        .catch(err => {
+            console.error('Failed to fetch cards:', err);
+            setLoading(false);
+        })
     }, [])
-    
-    useEffect(() => {
-        fetch('/api/spreads')
-        .then(res => res.json())
-        .then((data: Spread[]) => {
-        setSpreads(data);
-        if (data.length > 0) {
-            setSelectedSpreadId(data[0].id);
-        }
-        });
-    }, []);
 
     useEffect(() => {
         const s = spreads.find(sp => sp.id === selectedSpreadId);
@@ -250,7 +256,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
 
             const res = await fetch('/api/readings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({
                 date: new Date().toISOString(),
                 userId: user.id,
@@ -290,7 +296,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert }: ReadingsPanelPr
             setIsAnimating(false);
             setShowDescription(true);
         }, 3000);
-        };
+    };
 
 
     const handleDownloadPDF = async () => {

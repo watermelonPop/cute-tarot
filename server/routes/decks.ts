@@ -1,13 +1,19 @@
 import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
+import { verifyJWT, requireAdmin } from '../src/middleware/auth.js'
+
 
 const router = Router()
 
 // GET /api/decks
 router.get('/', async (_req, res) => {
-    const decks = await prisma.deck.findMany({
-    })
+  try {
+    const decks = await prisma.deck.findMany()
     res.json(decks)
+  } catch (err) {
+    console.error('GET /api/decks failed:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
 })
 
 // GET /api/decks/:id
@@ -86,7 +92,11 @@ router.get('/:id/images', async (req, res) => {
 });
 
 // POST /api/decks/:id/updateDeck
-router.post('/:deckId/updateDeck', async (req, res) => {
+router.post(
+  '/:deckId/updateDeck', 
+  verifyJWT,
+  requireAdmin,
+  async (req, res) => {
   const { deckId } = req.params;
   try {
     const { description, style } = req.body;

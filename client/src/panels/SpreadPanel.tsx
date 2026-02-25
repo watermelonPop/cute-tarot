@@ -13,9 +13,11 @@ interface SpreadPanelProps {
     user: User | null
     selectedDeck: Deck | null
     showAlert: (msg: string) => void
+    setLoading: (loading: boolean) => void
+    token: string | null
 }
 
-function SpreadPanel({user, selectedDeck, showAlert }: SpreadPanelProps) {
+function SpreadPanel({user, selectedDeck, showAlert, setLoading, token }: SpreadPanelProps) {
     const [spreads, setSpreads] = useState<Spread[]>([])
     const { spreadId } = useParams()
     const navigate = useNavigate()
@@ -26,12 +28,17 @@ function SpreadPanel({user, selectedDeck, showAlert }: SpreadPanelProps) {
     const [editableSpread, setEditableSpread] = useState<Spread | null>(null);
 
     useEffect(() => {
+        setLoading(true);
         fetch('/api/spreads')
             .then(res => res.json())
             .then((data: Spread[]) => {
                 setSpreads(data);
+                setLoading(false);
             })
-            .catch(err => console.error('Failed to fetch spreads:', err));
+            .catch(err => {
+                console.error('Failed to fetch spreads:', err);
+                setLoading(false);
+            });
     }, []);
 
     useEffect(() => {
@@ -73,7 +80,7 @@ function SpreadPanel({user, selectedDeck, showAlert }: SpreadPanelProps) {
         try {
             const res = await fetch(`/api/spreads/${currentSpread?.id}/updateSpread`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json',  'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     description: editableSpread?.description 
                 }),

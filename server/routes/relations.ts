@@ -1,22 +1,42 @@
 import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
+import { verifyJWT, requireAdmin, attachUser } from '../src/middleware/auth.js'
 
 const router = Router()
 
 // GET /api/relations
 router.get('/', async (_req, res) => {
-    const relations = await prisma.relation.findMany({
-    })
+  try {
+    const relations = await prisma.relation.findMany()
     res.json(relations)
+  } catch (err) {
+    console.error('GET /api/relations failed:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
 })
 
 // GET /api/relations/:id
 router.get('/:relationId', async (req, res) => {
+  try {
     const { relationId } = req.params;
+
+    if (!relationId || typeof relationId !== 'string') {
+      return res.status(400).json({ error: 'Relation ID parameter is required' });
+    }
+
     const relation = await prisma.relation.findUnique({
       where: { id: relationId }
     })
+
+    if (!relation) {
+      return res.status(404).json({ error: `Relation with ID ${relationId} not found` });
+    }
+
     res.json(relation)
+  } catch (err) {
+    console.error(`GET /api/relations/${req.params.relationId} failed:`, err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
 })
 
 // GET /api/relations/cardId/:cardId
@@ -152,35 +172,45 @@ router.post('/nCardRelations', async (req, res) => {
 });
 
 // POST /api/relations/:relationId/updateRelation
-router.post('/:relationId/updateRelation', async (req, res) => {
-  const { relationId } = req.params;
-  try {
-    const { description, descriptionAdvice, descriptionLove, descriptionCareer} = req.body;
+router.post(
+  '/:relationId/updateRelation',
+  verifyJWT,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { relationId } = req.params as { relationId: string };
+      const {
+        description,
+        descriptionAdvice,
+        descriptionLove,
+        descriptionCareer,
+      } = req.body;
 
-    const relation = await prisma.relation.findUnique({
-      where: { id: relationId },
-    });
+      const updatedRelation = await prisma.relation.update({
+        where: { id: relationId },
+        data: {
+          description,
+          descriptionAdvice,
+          descriptionLove,
+          descriptionCareer,
+        },
+      });
 
-    if (!relation) {
-      return res.status(404).json({ error: 'Relation not found' });
+      res.status(200).json(updatedRelation);
+    } catch (err: any) {
+      // If relation doesn't exist, Prisma throws
+      if (err.code === 'P2025') {
+        return res.status(404).json({ error: 'Relation not found' });
+      }
+
+      console.error(
+        `POST /api/relations/${req.params.relationId}/updateRelation failed:`,
+        err
+      );
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    const updatedRelation = await prisma.relation.update({
-      where: { id: relationId },
-      data: { 
-        description, 
-        descriptionAdvice, 
-        descriptionLove, 
-        descriptionCareer
-      },
-    });
-
-    res.status(200).json(updatedRelation);
-  } catch (err) {
-    console.error('POST /api/relations/:id/updateRelation failed:', err);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);
 
 
 export default router

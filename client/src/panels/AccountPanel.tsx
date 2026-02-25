@@ -24,8 +24,10 @@ interface AccountProps {
   login: () => void
   handleLogout: () => void
   selectedDeck: Deck | null
+  setLoading: (loading: boolean) => void
+    token: string | null
 }
-function AccountPanel({ user, selectedDeck, login, handleLogout }: AccountProps) {
+function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, token }: AccountProps) {
     const [cards, setCards] = useState<Card[]>([]);
     const [readings, setReadings] = useState<Reading[]>([]);
     const [spreads, setSpreads] = useState<Spread[]>([]);
@@ -34,51 +36,57 @@ function AccountPanel({ user, selectedDeck, login, handleLogout }: AccountProps)
     const infoModalRef = useRef<HTMLDivElement | null>(null);
      // Load all user readings
     useEffect(() => {
-        if (!user) return;
+        if (!user || !token) return;
+
+        setLoading(true);
 
         const loadReadings = async () => {
             try {
-                // 1️⃣ Fetch reading IDs
-                const res = await fetch(`/api/readings/user/${user.id}`);
-                if (!res.ok) throw new Error('Failed to fetch reading IDs');
+            // 1️⃣ Fetch reading IDs (JWT protected)
+            const res = await fetch(`/api/readings`, {
+                headers: {
+                'Authorization': `Bearer ${token}`,
+                },
+            });
 
-                const readingIds: string[] = await res.json();
+            if (!res.ok) throw new Error('Failed to fetch reading IDs');
 
-                // 2️⃣ Fetch each reading by ID
-                const readingPromises = readingIds.map(id =>
-                    fetch(`/api/readings/${id}`).then(r => {
-                        if (!r.ok) throw new Error(`Failed to fetch reading ${id}`);
-                        return r.json();
-                    })
-                );
+            const readingIds: string[] = await res.json();
 
-                // 3️⃣ Resolve all readings
-                const fullReadings = await Promise.all(readingPromises);
+            // 2️⃣ Fetch each reading by ID (also JWT protected)
+            const readingPromises = readingIds.map(id =>
+                fetch(`/api/readings/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                }).then(r => {
+                if (!r.ok) throw new Error(`Failed to fetch reading ${id}`);
+                return r.json();
+                })
+            );
 
-                setReadings(fullReadings);
+            const fullReadings = await Promise.all(readingPromises);
+            setReadings(fullReadings);
+
+            // 3️⃣ Public routes (no JWT needed)
+            const cardsRes = await fetch('/api/cards');
+            const cardsData: Card[] = await cardsRes.json();
+            setCards(cardsData);
+
+            const spreadsRes = await fetch('/api/spreads');
+            const spreadsData: Spread[] = await spreadsRes.json();
+            setSpreads(spreadsData);
+
+            setLoading(false);
+
             } catch (err) {
-                console.error('Failed to load readings:', err);
+            console.error('Failed to load readings:', err);
+            setLoading(false);
             }
         };
 
         loadReadings();
-    }, [user]);
-
-    // Load all cards
-    useEffect(() => {
-        fetch('/api/cards')
-        .then(res => res.json())
-        .then((data: Card[]) => setCards(data))
-        .catch(err => console.error('Failed to fetch cards:', err))
-    }, [])
-
-    // Load all spreads
-    useEffect(() => {
-        fetch('/api/spreads')
-        .then(res => res.json())
-        .then((data: Spread[]) => setSpreads(data))
-        .catch(err => console.error('Failed to fetch cards:', err))
-    }, []);
+        }, [user, token]);
 
     useEffect(() => {
         if(infoModalRef.current === null){

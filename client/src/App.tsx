@@ -4,7 +4,6 @@ import RiderWaiteIcon from './assets/images/Rider-Waite/card-icon.svg?react'
 import BunnyWaiteIcon from './assets/images/Bunny-Waite/card-icon.svg?react'
 import './App.css'
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
-import type { TokenResponse } from '@react-oauth/google';
 import CardsPanel from './panels/CardsPanel';
 import CardPanel from './panels/CardPanel';
 import RelationsPanel from './panels/RelationsPanel'
@@ -18,6 +17,8 @@ import ReadingPanel from './panels/ReadingPanel'
 import SearchCardsPanel from './panels/SearchCardsPanel';
 import PhysicalCard from './PhysicalCard'
 import Alert from './components/Alert';
+import Loader from './components/Loader';
+import ScrollTopButton from './components/ScrollTopButton';
 import { useLocation, Routes, Route, NavLink, Navigate } from 'react-router-dom'
 import type { NavLinkRenderProps } from 'react-router-dom'
 
@@ -31,7 +32,10 @@ function App() {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation()
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   /*const currentTab = (() => {
     const path = location.pathname.replace('/', '')
@@ -49,6 +53,21 @@ function App() {
 
     // cleanup
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+
+      // Show button after 300px scroll
+      setShowScrollTop(scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -110,7 +129,31 @@ function App() {
         root.style.setProperty(`--${key}`, value);
       }
     }
+
+    // Dynamically update browser theme color
+    const themeColor = selectedStyle['main-background'];
+
+    if (themeColor) {
+      let metaTheme = document.querySelector(
+        "meta[name='theme-color']"
+      ) as HTMLMetaElement | null;
+
+      if (!metaTheme) {
+        metaTheme = document.createElement("meta");
+        metaTheme.name = "theme-color";
+        document.head.appendChild(metaTheme);
+      }
+
+      metaTheme.content = themeColor;
+    }
   }, [selectedDeck]);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
 
   const fetchDeckForUser = async (deckId: string) => {
     try {
@@ -127,83 +170,40 @@ function App() {
   }
 
   const login = useGoogleLogin({
-    flow: 'implicit',
+    flow: 'auth-code', // auth code flow
     scope: 'openid email profile',
-    onSuccess: async (tokenResponse: TokenResponse) => {
+    onSuccess: async (codeResponse: { code: string }) => {
       try {
-        // Fetch user info from Google
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: {
-            Authorization: `Bearer ${tokenResponse.access_token}`,
-          },
-        })
+        console.log('Received code:', codeResponse.code); 
+        // Send the auth code to our backend
+        const res = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: codeResponse.code }),
+        });
 
-        const userInfo = await res.json()
-        const { name, email, picture } = userInfo
+        if (!res.ok) throw new Error(`Google login failed with status ${res.status}`);
+        const { user, token } = await res.json();
 
-        fetch(`/api/users/check?email=${email}`)
-          .then(res => res.json())
-          .then(data => {
-            console.log('Check:', data)
-            const pictureWithSize = `${picture}?sz=128`;
-            if (data.exists === true) {
-              console.log('EXISTS')
-              fetch(`/api/users/${data.user_id}`)
-                .then(res => res.json())
-                .then(data => {
-                  const fullUser = { ...data, picture: pictureWithSize }
-                  console.log('USER:', fullUser)
+        // Save user and backend token
+        setUser(user);
+        setToken(token);
 
-                  setUser(fullUser)
+        console.log('Logged in user:', user);
+        console.log('TOKEN: ' + token);;
 
-                  // 🔹 Fetch selected deck
-                  if (fullUser.selectedDeck) {
-                    fetchDeckForUser(fullUser.selectedDeck)
-                  }
-                })
-            } else {
-              console.log('DOES NOT EXIST')
-              fetch('/api/users', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  email,
-                  name,
-                  picture,
-                }),
-              })
-                .then(res => {
-                  if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`)
-                  }
-                  return res.json()
-                })
-                .then(data => {
-                  const fullUser = { ...data, picture: pictureWithSize }
-                  console.log('CREATED USER:', fullUser)
-
-                  setUser(fullUser)
-
-                  // 🔹 Fetch selected deck
-                  if (fullUser.selectedDeck) {
-                    fetchDeckForUser(fullUser.selectedDeck)
-                  }
-                })
-                .catch(err => {
-                  console.error('Error creating user:', err)
-                })
-            }
-          })
+        // Optional: fetch user's selected deck
+        if (user.selectedDeck) {
+          fetchDeckForUser(user.selectedDeck);
+        }
       } catch (err) {
-        console.error('Login failed', err)
+        console.error('Login failed:', err);
       }
     },
     onError: () => {
-      console.error('Login Failed')
+      console.error('Login failed');
     },
-  })
+  });
 
   const handleLogout = () => {
     googleLogout()
@@ -240,6 +240,9 @@ function App() {
         visible={true}
         onClose={hideAlert}
       />
+    )}
+    {loading && (
+      <Loader setLoading={setLoading}/>
     )}
       <div className='header'>
         <HeaderIcon className="logo" />
@@ -336,67 +339,67 @@ function App() {
 
           <Route
             path="/account"
-            element={<AccountPanel user={user} setUser={setUser} login={login} handleLogout={handleLogout} selectedDeck={selectedDeck}/>}
+            element={<AccountPanel user={user} setUser={setUser} login={login} handleLogout={handleLogout} selectedDeck={selectedDeck} setLoading={setLoading} token={token}/>}
           />
 
           <Route
             path="/cards/:nameShort"
-            element={<CardPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} />}
+            element={<CardPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
           />
 
           <Route
             path="/cards"
-            element={<CardsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert}/>}
+            element={<CardsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading}/>}
           />
 
           <Route
             path="/cards/search/:searchText?/:suitFilter?"
-            element={<SearchCardsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert}/>}
+            element={<SearchCardsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading}/>}
           />
 
           <Route
             path="/relations"
-            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert}/>}
+            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading} token={token}/>}
           />
 
           <Route
             path="/relations/:nameShort1"
-            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} />}
+            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading} token={token}/>}
           />
 
           <Route
             path="/relations/:nameShort1/:nameShort2"
-            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert}/>}
+            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading} token={token}/>}
           />
 
           <Route
             path="/decks"
-            element={<DecksPanel user={user} selectedDeck={selectedDeck}/>}
+            element={<DecksPanel user={user} selectedDeck={selectedDeck} setLoading={setLoading}/>}
           />
 
           <Route
             path="/decks/:deckName"
-            element={<DeckPanel user={user} selectedDeck={selectedDeck} setSelectedDeck={setSelectedDeck} showAlert={showAlert}/>}
+            element={<DeckPanel user={user} selectedDeck={selectedDeck} setSelectedDeck={setSelectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
           />
 
           <Route
             path="/spreads"
-            element={<SpreadsPanel user={user} selectedDeck={selectedDeck}/>}
+            element={<SpreadsPanel user={user} selectedDeck={selectedDeck} setLoading={setLoading}/>}
           />
 
           <Route
             path="/spreads/:spreadId"
-            element={<SpreadPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert}/>}
+            element={<SpreadPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
           />
 
           <Route
             path="/readings"
-            element={<ReadingsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} />}
+            element={<ReadingsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading} token={token}/>}
           />
 
           <Route
             path="/readings/:readingId"
-            element={<ReadingPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert}/>}
+            element={<ReadingPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
           />
 
           <Route
@@ -405,7 +408,9 @@ function App() {
           />
         </Routes>
       </div>
-
+      {showScrollTop && (
+        <ScrollTopButton scrollToTop={scrollToTop}/>
+      )}
     </>
   )
 }

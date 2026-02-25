@@ -26,6 +26,10 @@
   transition: transform 0.05s linear;
 }
 
+.card3dScene{
+  border-radius: var(--border-radius);
+}
+
 /* ===== CARD SIDES ===== */
 
 .physCardFace {

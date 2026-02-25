@@ -149,14 +149,12 @@
 }
 
 /* loader container */
-.starLoader {
+/*.starLoader {
   position: relative;
   width: 60px;
   height: 60px;
   animation: spinLoader 2s linear infinite;
 }
-
-/* individual stars */
 .loaderStar {
   position: absolute;
   width: 14px;
@@ -171,8 +169,6 @@
     translate(26px)
     rotate(calc(var(--i) * -60deg));
 }
-
-/* smooth infinite rotation */
 @keyframes spinLoader {
   from {
     transform: rotate(0deg);
@@ -180,7 +176,7 @@
   to {
     transform: rotate(360deg);
   }
-}
+}*/
 .modalCardImg {
   width: 100%;
   height: auto;

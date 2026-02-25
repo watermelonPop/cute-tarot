@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
+import { verifyJWT, requireAdmin } from '../src/middleware/auth.js'
 
 const router = Router()
 
@@ -234,8 +235,12 @@ router.get('/draw/:numDrawn/:reversed', async (req, res) => {
   }
 });
 
-
-router.post('/:cardId/updateCard', async (req, res) => {
+// POST /api/cards/:cardId/updateCard
+router.post(
+  '/:cardId/updateCard', 
+  verifyJWT,
+  requireAdmin,
+  async (req, res) => {
   const { cardId } = req.params;
   try {
     const {meaningUp, meaningRev, keywordsUp, keywordsRev, meaningAdvice, meaningLove, meaningCareer,  meaningYesNo, descriptions } = req.body;

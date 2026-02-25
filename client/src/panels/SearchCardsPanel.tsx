@@ -13,6 +13,7 @@ interface SearchCardsPanelProps {
   selectedDeck: Deck | null;
   width: number;
   showAlert: (msg: string) => void
+  setLoading: (loading: boolean) => void
 }
 
 const VALID_SUITS: Suit[] = [
@@ -24,7 +25,7 @@ const VALID_SUITS: Suit[] = [
   'Coins',
 ];
 
-function SearchCardsPanel({ user, selectedDeck, width, showAlert }: SearchCardsPanelProps) {
+function SearchCardsPanel({ user, selectedDeck, width, showAlert, setLoading }: SearchCardsPanelProps) {
   const [resultCards, setResultCards] = useState<Card[]>([]);
   const navigate = useNavigate();
   const params = useParams();
@@ -49,6 +50,7 @@ function SearchCardsPanel({ user, selectedDeck, width, showAlert }: SearchCardsP
   }, [searchText, suitFilter]);
 
   useEffect(() => {
+    setLoading(true);
     const fetchCards = async () => {
       let cards: Card[] = [];
 
@@ -65,11 +67,13 @@ function SearchCardsPanel({ user, selectedDeck, width, showAlert }: SearchCardsP
       }
 
       setResultCards(cards);
+      setLoading(false);
     };
 
-    fetchCards().catch(err =>
-      console.error('Failed to fetch cards:', err)
-    );
+    fetchCards().catch(err => {
+      console.error('Failed to fetch cards:', err);
+      setLoading(false);
+    });
   }, [searchText, suitFilter]);
 
     useEffect(() => {

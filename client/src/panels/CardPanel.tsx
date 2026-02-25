@@ -11,9 +11,11 @@ interface CardPanelProps {
   user: User | null
   selectedDeck: Deck | null
   showAlert: (msg: string) => void
+  setLoading: (loading: boolean) => void
+  token: string | null
 }
 
-function CardPanel({ user, selectedDeck, showAlert }: CardPanelProps){
+function CardPanel({ user, selectedDeck, showAlert, setLoading, token }: CardPanelProps){
     const [cards, setCards] = useState<Card[]>([])
     const { nameShort } = useParams()
     const navigate = useNavigate();
@@ -26,10 +28,17 @@ function CardPanel({ user, selectedDeck, showAlert }: CardPanelProps){
 
     // Load all cards
     useEffect(() => {
+        setLoading(true);
         fetch('/api/cards')
         .then(res => res.json())
-        .then((data: Card[]) => setCards(data))
-        .catch(err => console.error('Failed to fetch cards:', err))
+        .then((data: Card[]) => {
+            setCards(data);
+            setLoading(false);
+        })
+        .catch(err => {
+            console.error('Failed to fetch cards:', err);
+            setLoading(false);
+        })
     }, [])
 
     useEffect(() => {
@@ -60,15 +69,16 @@ function CardPanel({ user, selectedDeck, showAlert }: CardPanelProps){
     };
 
     const handleSaveEdits = async () => {
-        if(user?.type !== "Admin" || adminEditing === false || !currentCard?.id){
+        if(user?.type !== "Admin" || adminEditing === false || !currentCard?.id || !token){
             showAlert("Not authorized for editing.");
             return;
         }
+        console.log("SAVE TOKEN: " + token);
 
         try {
             const res = await fetch(`/api/cards/${currentCard?.id}/updateCard`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     meaningUp: editableCard?.meaningUp, 
                     meaningRev: editableCard?.meaningRev, 
