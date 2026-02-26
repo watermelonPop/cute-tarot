@@ -48,7 +48,7 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(true);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   /*const currentTab = (() => {
     const path = location.pathname.replace('/', '')
