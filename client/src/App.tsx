@@ -49,6 +49,7 @@ function App() {
   const [token, setToken] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [installCheckComplete, setInstallCheckComplete] = useState(false);
 
   /*const currentTab = (() => {
     const path = location.pathname.replace('/', '')
@@ -72,6 +73,8 @@ function App() {
     if (isIos() && !isInStandaloneMode()) {
       setShowInstallPrompt(true);
     }
+
+    setInstallCheckComplete(true);
   }, []);
 
   useEffect(() => {
@@ -351,16 +354,15 @@ function App() {
     </div>
       <div className="outerPanel">
         <Routes>
-          {showInstallPrompt === true ? (
+          {!installCheckComplete ? (
+            <Route path="*" element={null} />
+          ) : showInstallPrompt ? (
             <Route
               path="/"
               element={<InstallPrompt setShowInstallPrompt={setShowInstallPrompt} />}
             />
-          ):(
-            <Route
-              path="/"
-              element={<Navigate to="/cards" replace />}
-            />
+          ) : (
+            <Route path="/" element={<Navigate to="/cards" replace />} />
           )}
 
           <Route
