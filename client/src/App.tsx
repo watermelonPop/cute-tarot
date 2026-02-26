@@ -48,7 +48,7 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(true);
 
   /*const currentTab = (() => {
     const path = location.pathname.replace('/', '')
@@ -349,9 +349,6 @@ function App() {
             </div>
         </div>
     </div>
-      {showInstallPrompt === true && (
-        <InstallPrompt setShowInstallPrompt={setShowInstallPrompt} />
-      )}
       <div className="outerPanel">
         <Routes>
           {showInstallPrompt === true ? (

@@ -6,7 +6,7 @@ interface InstallPromptProps {
   setShowInstallPrompt: (show: boolean) => void
 }
 
-export default function InstallPrompt({ setShowInstallPrompt }: InstallPromptProps) {
+function InstallPrompt({ setShowInstallPrompt }: InstallPromptProps) {
   
   return (
     <div className="install-overlay">
@@ -32,3 +32,5 @@ export default function InstallPrompt({ setShowInstallPrompt }: InstallPromptPro
     </div>
   );
 }
+
+export default InstallPrompt;
