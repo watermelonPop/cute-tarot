@@ -2,7 +2,7 @@
   "name": "Cute Tarot",
   "short_name": "Tarot",
   "start_url": "/",
-  "display": "standalone",
+  "display": "fullscreen",
   "scope": "/",
   "background_color": "#231942",
   "theme_color": "#231942",
