@@ -354,10 +354,17 @@ function App() {
       )}
       <div className="outerPanel">
         <Routes>
-          <Route
-            path="/"
-            element={<Navigate to="/cards" replace />}
-          />
+          {showInstallPrompt === true ? (
+            <Route
+              path="/"
+              element={<InstallPrompt setShowInstallPrompt={setShowInstallPrompt} />}
+            />
+          ):(
+            <Route
+              path="/"
+              element={<Navigate to="/cards" replace />}
+            />
+          )}
 
           <Route
             path="/account"
