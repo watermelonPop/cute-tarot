@@ -20,7 +20,7 @@ import Alert from './components/Alert';
 import Loader from './components/Loader';
 import ScrollTopButton from './components/ScrollTopButton';
 import StandaloneLanding from './StandaloneLanding';
-import { useLocation, Routes, Route, NavLink, Navigate } from 'react-router-dom'
+import { useLocation, Routes, Route, NavLink } from 'react-router-dom'
 import type { NavLinkRenderProps } from 'react-router-dom'
 
 
