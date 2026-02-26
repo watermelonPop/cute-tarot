@@ -19,10 +19,21 @@ import PhysicalCard from './PhysicalCard'
 import Alert from './components/Alert';
 import Loader from './components/Loader';
 import ScrollTopButton from './components/ScrollTopButton';
-import StandaloneLanding from './StandaloneLanding';
-import { useLocation, Routes, Route, NavLink } from 'react-router-dom'
+import InstallPrompt from './InstallPrompt';
+import { useLocation, Routes, Route, NavLink, Navigate } from 'react-router-dom'
 import type { NavLinkRenderProps } from 'react-router-dom'
 
+
+function isIos() {
+  return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+}
+
+function isInStandaloneMode() {
+  return (
+    (window.navigator as any).standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches
+  );
+}
 
 function App() {
   const [user, setUser] = useState<User | null>(null)
@@ -37,6 +48,7 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   /*const currentTab = (() => {
     const path = location.pathname.replace('/', '')
@@ -54,6 +66,12 @@ function App() {
 
     // cleanup
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isIos() && !isInStandaloneMode()) {
+      setShowInstallPrompt(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -331,11 +349,14 @@ function App() {
             </div>
         </div>
     </div>
+      {showInstallPrompt === true && (
+        <InstallPrompt setShowInstallPrompt={setShowInstallPrompt} />
+      )}
       <div className="outerPanel">
         <Routes>
-          <Route 
-            path="/" 
-            element={<StandaloneLanding />} 
+          <Route
+            path="/"
+            element={<Navigate to="/cards" replace />}
           />
 
           <Route
