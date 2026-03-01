@@ -367,7 +367,7 @@ function App() {
 
           <Route
             path="/account"
-            element={<AccountPanel user={user} setUser={setUser} login={login} handleLogout={handleLogout} selectedDeck={selectedDeck} setLoading={setLoading} token={token}/>}
+            element={<AccountPanel user={user} setUser={setUser} login={login} handleLogout={handleLogout} selectedDeck={selectedDeck} setLoading={setLoading} token={token} showAlert={showAlert}/>}
           />
 
           <Route

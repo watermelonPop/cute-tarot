@@ -1,6 +1,8 @@
 import { Router } from 'express'
 import { prisma } from '../lib/prisma.js'
-import { verifyJWT, attachUser, requireReadingOwnership } from '../src/middleware/auth.js'
+import { Prisma } from '@prisma/client';
+import { Request as ExpressRequest, Response as ExpressResponse, NextFunction } from 'express';
+import { verifyJWT, requireReadingOwnership, requireAdmin } from '../src/middleware/auth.js'
 
 const router = Router()
 
@@ -306,5 +308,64 @@ router.post(
     }
   }
 );
+
+// DELETE /api/readings/:readingId
+router.delete(
+  '/:readingId',
+  verifyJWT,
+  requireReadingOwnership("readingId"),
+  async (req: ExpressRequest, res: ExpressResponse, next: NextFunction) => {
+    const { readingId } = req.params;
+
+    if (!readingId?.trim()) {
+      res.status(400).json({ error: 'Reading ID is required' });
+      return;
+    }
+
+    try {
+      const { userId } = req.body;
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+
+      //remove reading from user's readings
+      if (user.readings.includes(readingId)) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            readings: {
+              set: user.readings.filter(id => id !== readingId),
+            },
+          },
+        });
+      }
+
+      //delete reading
+      await prisma.reading.delete({
+        where: { id: readingId }
+      });
+
+      res.status(204).send();
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        // P2025 is thrown by Prisma when the record to delete doesn't exist
+        if (err.code === 'P2025') {
+          res.status(404).json({ error: `Reading '${readingId}' not found` });
+          return;
+        }
+      }
+
+      next(err);
+    }
+  }
+);
+
 
 export default router

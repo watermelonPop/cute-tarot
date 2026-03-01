@@ -18,6 +18,7 @@
 
 
 .userReading{
+    position: relative; 
     background-color: var(--accent-background);
     border-radius: var(--border-radius);
     display: flex;
@@ -28,6 +29,41 @@
     min-height: 20rem;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+.readingActionBtn {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+
+  border: none;
+  background: var(--secondary-background);
+  color: var(--secondary-text);
+
+  font-size: 1rem;
+  font-weight: bold;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  z-index: 5;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+}
+
+.readingActionBtn:hover {
+  transform: scale(1.1);
+}
+
+.readingActionBtn:active {
+  transform: scale(0.95);
 }
 
 .userReading h3{
@@ -75,6 +111,19 @@
     font-weight: 700;
     background-color: var(--accent-text);
     color: var(--accent-background);
+    cursor: pointer;
+}
+
+.editReadingsBtn{
+  padding: 1rem;
+    border-radius: var(--border-radius);
+    font-family: "Literata", serif;
+    outline: none;
+    border: 2px solid transparent;
+    font-size: 1rem;
+    font-weight: 700;
+    background-color: var(--main-text);
+    color: var(--main-background);
     cursor: pointer;
 }
 

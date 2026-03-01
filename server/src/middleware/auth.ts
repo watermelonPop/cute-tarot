@@ -1,9 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../../lib/prisma.js';
 import jwt from 'jsonwebtoken';
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export async function verifyJWT(
   req: Request,

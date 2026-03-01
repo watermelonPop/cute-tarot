@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import '../App.css'
 import './panel.css'
 import type { User, Reading, Deck, Relation, Spread, Card } from '../types'
-import { useParams } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 
 interface ReadingPanelProps {
   user: User | null
@@ -20,7 +20,16 @@ function ReadingPanel({ user, selectedDeck, showAlert, setLoading, token }: Read
     const [editingNotes, setEditingNotes] = useState<boolean>(false);
     const [editedNotes, setEditedNotes] = useState<string>("");
     const { readingId } = useParams()
-    
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.scrollUp && reading !== null) {
+            let el = document.getElementById('scrollTop');
+            if (el !== null) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }, [reading]);
 
     // Load all cards
     useEffect(() => {
@@ -112,7 +121,7 @@ function ReadingPanel({ user, selectedDeck, showAlert, setLoading, token }: Read
            {reading !== null &&  user !== null && (
                 <div className='outerReading'>
                     <div className='topInnerReadingOuter'>
-                    <div className='cardImgs'>
+                    <div className='cardImgs' id="scrollTop">
                         {reading.cards.map((cardId, idx) => {
                             const card = cards.find(c => c.id === cardId);
 

@@ -620,7 +620,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
                             <div className='topReadingOuter'>
                             <h2 ref={headingRef}>Your Reading: </h2>
                             {user !== null && (
-                                <button className='getReadingBtn' onClick={() => navigate(`/readings/${createdReading.id}`)}>Go to Full Reading</button>
+                                <button className='getReadingBtn' onClick={() => navigate(`/readings/${createdReading.id}`, { state: { scrollUp: true } })}>Go to Full Reading</button>
                             )}
                             <div>
                                 <h3 className='tableContentsTitle'>Table of Contents</h3>
