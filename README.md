@@ -4,11 +4,14 @@
 
 https://cute-tarot.vercel.app/
 
+
+## Slideshow!
+https://docs.google.com/presentation/d/1-Cr6huktZBQLAsuPimg-NI_PkqypNGVKvy-qZfcerSQ/edit?usp=sharing
   
 
 ## Introduction
 
-Tarot reading has been such an important part of my life that I decided to learn it myself. But I discovered that gathering the information on card meanings and relationships is a beast of its own. I built this project to make the process easier! It brings everything together in one place: card meanings and relationships, tarot spreads, and a way to record and reflect on your readings over time. It also includes a tarot deck that I drew myself based on the Rider-Waite deck. As I continue buying and making new decks, I'll be adding them to the project! Please enjoy my labor of love!
+Tarot reading has been such an important part of my life that I decided to learn it myself. But I discovered that gathering the information on card meanings and relationships is a beast of its own. I built this project to make the process easier! It brings everything together in one place: card meanings and relationships, tarot spreads, and a way to record and reflect on your readings over time. It also includes a tarot deck that I drew myself based on the Rider-Waite deck. As I continue buying and making new decks, I'll be adding them to the project! Please enjoy my labor of love! 
 
   
 
