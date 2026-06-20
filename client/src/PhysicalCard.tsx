@@ -7,30 +7,40 @@ import { useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom'
+import Loader from './components/Loader'
 
 function PhysicalCard() {
     const [decks, setDecks] = useState<Deck[]>([]);
     const [cards, setCards] = useState<Card[]>([]);
     const { deckName, cardNameShort } = useParams();
-    const [showModal, setShowModal] = useState(false)
+    const [showModal, setShowModal] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-
     useEffect(() => {
-        fetch('/api/decks')
-            .then(res => res.json())
-            .then((data: Deck[]) => {
-                setDecks(data);
-            })
-            .catch(err => console.error('Failed to fetch decks:', err));
-    }, []);
+        const loadData = async () => {
+            setLoading(true);
 
-    useEffect(() => {
-        fetch('/api/cards')
-        .then(res => res.json())
-        .then((data: Card[]) => setCards(data))
-        .catch(err => console.error('Failed to fetch cards:', err))
-    }, [])
+            try {
+                const [decksRes, cardsRes] = await Promise.all([
+                    fetch('/api/decks'),
+                    fetch('/api/cards')
+                ]);
+
+                const decksData: Deck[] = await decksRes.json();
+                const cardsData: Card[] = await cardsRes.json();
+
+                setDecks(decksData);
+                setCards(cardsData);
+            } catch (err) {
+                console.error('Failed to load data:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+    }, [setLoading]);
 
     // Find the card based on the URL param
     const currentCard = cardNameShort ? cards.find(c => c.nameShort === cardNameShort) : null;
@@ -40,6 +50,9 @@ function PhysicalCard() {
 
     return (
         <>
+            {loading && (
+              <Loader/>
+            )}
             <div className='physCardOuter' style={{ backgroundColor: currentDeck?.style['main-background'], color:  currentDeck?.style['main-text']}}>
                 <h2>{currentCard?.name}</h2>
                 <div className='physImgsOuter'>
