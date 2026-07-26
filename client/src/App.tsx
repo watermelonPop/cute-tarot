@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import type { User, Deck } from './types'
 import RiderWaiteCardIcon from './assets/images/Rider-Waite/card-icon.svg?react'
 import BunnyWaiteCardIcon from './assets/images/Bunny-Waite/card-icon.svg?react'
@@ -17,7 +17,6 @@ import DeckPanel from './panels/DeckPanel'
 import SpreadPanel from './panels/SpreadPanel'
 import AccountPanel from './panels/AccountPanel'
 import ReadingPanel from './panels/ReadingPanel'
-import SearchCardsPanel from './panels/SearchCardsPanel';
 import PhysicalCard from './PhysicalCard'
 import Alert from './components/Alert';
 import Loader from './components/Loader';
@@ -110,6 +109,14 @@ function App() {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       });
+  }, []);
+
+  useEffect(() => {
+    if (isIos() && !isInStandaloneMode()) {
+      setShowInstallPrompt(true);
+    }
+
+    setInstallCheckComplete(true);
   }, []);
 
   useEffect(() => {
@@ -487,17 +494,17 @@ function App() {
 
             <Route
               path="/decks/:deckName"
-              element={<DeckPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} CardIcon={CardIcon} setUserSelectedDeck={setUserSelectedDeck} isMobile={isMobile}/>}
+              element={<DeckPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} setUserSelectedDeck={setUserSelectedDeck} isMobile={isMobile}/>}
             />
 
             <Route
               path="/spreads"
-              element={<SpreadsPanel user={user} selectedDeck={selectedDeck} setLoading={setLoading} CardIcon={CardIcon}/>}
+              element={<SpreadsPanel setLoading={setLoading} CardIcon={CardIcon}/>}
             />
 
             <Route
               path="/spreads/:spreadId"
-              element={<SpreadPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+              element={<SpreadPanel user={user} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
             />
 
             <Route
@@ -507,7 +514,7 @@ function App() {
 
             <Route
               path="/readings/:readingId"
-              element={<ReadingPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
+              element={<ReadingPanel selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
             />
 
             <Route

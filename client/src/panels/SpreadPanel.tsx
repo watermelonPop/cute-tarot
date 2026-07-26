@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import '../App.css'
 import './panel.css'
 import './SpreadsPanel.css'
-import type { User, Deck, Spread} from '../types'
+import type { User, Spread} from '../types'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
@@ -11,14 +11,13 @@ import InfoPage from '../components/InfoPage'
 
 interface SpreadPanelProps {
     user: User | null
-    selectedDeck: Deck | null
     showAlert: (msg: string) => void
     setLoading: (loading: boolean) => void
     token: string | null
     Icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 }
 
-function SpreadPanel({user, selectedDeck, showAlert, setLoading, token, Icon }: SpreadPanelProps) {
+function SpreadPanel({user, showAlert, setLoading, token, Icon }: SpreadPanelProps) {
     const [spreads, setSpreads] = useState<Spread[]>([])
     const { spreadId } = useParams()
     const navigate = useNavigate()

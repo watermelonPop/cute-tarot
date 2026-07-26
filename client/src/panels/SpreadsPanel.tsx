@@ -1,22 +1,20 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import '../App.css'
 import './panel.css'
 import './SpreadsPanel.css'
 import MiniSpread from '../components/MiniSpread'
-import type { User, Deck, Spread} from '../types'
+import type { Spread} from '../types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import Modal from '../components/Modal'
 import InfoPage from '../components/InfoPage'
 
 interface SpreadsPanelProps {
-    user: User | null
-    selectedDeck: Deck | null
     setLoading: (loading: boolean) => void
     CardIcon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 }
 
-function SpreadsPanel({ user, selectedDeck, setLoading, CardIcon }: SpreadsPanelProps) {
+function SpreadsPanel({ setLoading, CardIcon }: SpreadsPanelProps) {
     const [spreads, setSpreads] = useState<Spread[]>([]);
     const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
@@ -40,7 +38,7 @@ function SpreadsPanel({ user, selectedDeck, setLoading, CardIcon }: SpreadsPanel
                 </div>
                 <div className='outerDeckGrid'>
                     {spreads.map((spread) => (
-                        <MiniSpread user={user} selectedDeck={selectedDeck} spread={spread} CardIcon={CardIcon}></MiniSpread>
+                        <MiniSpread spread={spread} CardIcon={CardIcon}></MiniSpread>
                     ))}
                 </div>
             </div>

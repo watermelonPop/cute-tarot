@@ -1,4 +1,3 @@
-import { useState, useRef, useLayoutEffect } from 'react'
 import './MiniCard.css'
 import type { Deck, Card } from '../types'
 

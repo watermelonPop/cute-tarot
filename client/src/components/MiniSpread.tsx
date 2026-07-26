@@ -1,14 +1,12 @@
-import type { User, Deck, Spread } from '../types'
+import type { Spread } from '../types'
 import { useNavigate } from 'react-router-dom'
 
 interface MiniSpreadProps {
-    user: User | null
-    selectedDeck: Deck | null
     spread: Spread
     CardIcon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 }
 
-function MiniSpread({ selectedDeck, spread, CardIcon }: MiniSpreadProps) {
+function MiniSpread({ spread, CardIcon }: MiniSpreadProps) {
     const navigate = useNavigate();
 
   return (

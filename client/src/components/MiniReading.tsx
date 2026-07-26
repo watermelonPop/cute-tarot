@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { User, Deck, Reading, Card, Spread } from '../types'
+import type {Deck, Reading, Card, Spread } from '../types'
 import { useNavigate } from 'react-router-dom'
 import { formatDate } from '../types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

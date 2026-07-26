@@ -1,13 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import '../App.css'
 import './panel.css'
 import './AccountPanel.css'
 import '../components/MiniDeck.css'
 import type { User, Deck, Card, Reading, Spread } from '../types'
-import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleInfo, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { formatDate } from '../types'
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import MiniReading from '../components/MiniReading'
 import Modal from '../components/Modal'
 import InfoPage from '../components/InfoPage'
@@ -27,7 +25,6 @@ function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, tok
     const [cards, setCards] = useState<Card[]>([]);
     const [readings, setReadings] = useState<Reading[]>([]);
     const [spreads, setSpreads] = useState<Spread[]>([]);
-    const navigate = useNavigate();
     const [editingReadings, setEditingReadings] = useState<boolean>(false);
         const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
      // Load all user readings

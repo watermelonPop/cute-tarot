@@ -1,16 +1,14 @@
 import './SelectCardPage.css'
-import { NavLink, type NavLinkRenderProps } from 'react-router-dom'
-import type {User, Card, Deck} from '../types'
+import type {Card, Deck} from '../types'
 import NoFlipMiniCard from './NoFlipMiniCard'
 
 interface SelectCardPageProps {
     setCard: (card: Card | null) => void;
     showModal: boolean;
-    setShowModal: (show: boolean) => void;
     groupedCards: {suit: string, cards: any[]}[];
     selectedDeck: Deck;
 }
-export default function SelectCardPage({ showModal, setShowModal, groupedCards, setCard, selectedDeck }: SelectCardPageProps) {
+export default function SelectCardPage({ showModal, groupedCards, setCard, selectedDeck }: SelectCardPageProps) {
     if(!showModal) return null;
 
     return (

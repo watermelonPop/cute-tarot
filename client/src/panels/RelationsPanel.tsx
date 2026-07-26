@@ -55,7 +55,6 @@ function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon
     const [cards, setCards] = useState<Card[]>([])
     const [showDescription, setShowDescription] = useState(false);
     const [currentRelation, setCurrentRelation] = useState<Relation | null>(null);
-    const modalRef = useRef<HTMLDivElement | null>(null);
     const [isAnimating, setIsAnimating] = useState(false)
     const headingRef = useRef<HTMLHeadingElement | null>(null);
     const navigate = useNavigate();
@@ -354,7 +353,6 @@ function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon
                 {showCardSelectModal.index === 1 ? (
                     <SelectCardPage
                         showModal={showCardSelectModal.show}
-                        setShowModal={(show) => setShowCardSelectModal({show, index: 1})}
                         groupedCards={groupedCards}
                         setCard={setFirstCard}
                         selectedDeck={selectedDeck!}
@@ -362,7 +360,6 @@ function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon
                 ):(
                     <SelectCardPage
                         showModal={showCardSelectModal.show}
-                        setShowModal={(show) => setShowCardSelectModal({show, index: 2})}
                         groupedCards={groupedCards}
                         setCard={setSecondCard}
                         selectedDeck={selectedDeck!}

@@ -3,7 +3,6 @@ import '../App.css'
 import './panel.css'
 import './ReadingsPanel.css'
 import './RelationsPanel.css'
-import Sparkles from '../components/Sparkles'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import type { User, Reading, Deck, Relation, Spread, Card, Topic, DrawingMethod, Suit } from '../types'
@@ -761,7 +760,6 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
             <Modal title={`Choose Card for Reading`} showModal={modalOpen} setShowModal={setModalOpen}>
                 <SelectCardPage
                     showModal={modalOpen}
-                    setShowModal={setModalOpen}
                     groupedCards={groupedCards}
                     setCard={(card: Card | null)=>{
                         let newC = [...selectedCards];

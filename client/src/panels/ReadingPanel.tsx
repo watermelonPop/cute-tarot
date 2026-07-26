@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import '../App.css'
 import './panel.css'
-import type { User, Reading, Deck, Relation, Spread, Card } from '../types'
+import type { Reading, Deck, Relation, Spread, Card } from '../types'
 import { useParams, useLocation } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
@@ -103,14 +103,13 @@ function buildReadingToc(
 }
 
 interface ReadingPanelProps {
-  user: User | null
   selectedDeck: Deck | null
   showAlert: (msg: string) => void
   setLoading: (loading: boolean) => void
     token: string | null
 }
 
-function ReadingPanel({ user, selectedDeck, showAlert, setLoading, token }: ReadingPanelProps) {
+function ReadingPanel({ selectedDeck, showAlert, setLoading, token }: ReadingPanelProps) {
     const [reading, setReading] = useState<Reading | null>(null);
     const [relations, setRelations] = useState<Relation[]>([]);
     const [cards, setCards] = useState<Card[]>([]);

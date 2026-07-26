@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import '../App.css'
 import './panel.css'
 import './DeckPanel.css'
@@ -20,11 +20,10 @@ interface DeckPanelProps {
   showAlert: (msg: string) => void
   setLoading: (loading: boolean) => void
     token: string | null
-    CardIcon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
     isMobile: () => boolean
 }
 
-function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoading, token, CardIcon, isMobile }: DeckPanelProps) {
+function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoading, token, isMobile }: DeckPanelProps) {
     const [cards, setCards] = useState<Card[]>([])
     const [decks, setDecks] = useState<Deck[]>([])
     const { deckName } = useParams()
