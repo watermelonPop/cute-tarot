@@ -1,11 +1,10 @@
 .deckCardDesc{
     background-color: var(--accent-background);
-    width: 85%;
+    width: 95%;
     height: 10%;
     text-align: center;
     border-radius: var(--border-radius);
     color: var(--accent-text);
-    margin-bottom: 2.5%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -19,12 +18,13 @@
 .outerDeckCardGrid{
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
+    column-gap: 1rem;
+    row-gap: 1.5rem;
 
-    width: 85%;
+    width: 95%;
     margin: 0 auto;
 
-    padding: 16px 16px 4rem; /* ← bottom breathing room */
+    padding: 16px 16px 3rem; /* ← bottom breathing room */
     box-sizing: border-box;
 
     height: auto;
@@ -38,7 +38,8 @@
     width: 44%;
     margin: 0 auto;
 
-    padding: 16px 16px 4rem; /* ← bottom breathing room */
+    padding: 0.5rem; /* ← bottom breathing room */
+    padding-bottom: 1rem;
     box-sizing: border-box;
 
     height: auto;
@@ -104,13 +105,22 @@
 
 .unselectedBtn{
     background-color: transparent;
-    border: solid var(--main-text);
-    color: var(--main-text);
+    border: solid var(--secondary-text);
+    color: var(--secondary-text);
 }
 
 .innerSuitTitle{
-    color: var(--main-text);
+    color: var(--secondary-text);
     margin: 0.5rem;
+    border-top: 2px solid var(--main-background);
+    width: 95%;
+    padding-top: 1rem;
+}
+
+.innerSuitTitle:first-of-type{
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
 }
 
 .colorGrid{
@@ -143,27 +153,4 @@
 .deckColorInput label{
     text-align: center;
     color: var(--accent-text);
-}
-
-/* Phone */
-@media (max-width: 767px) {
-    .outerDeckCardGrid{
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 95%;
-    }
-
-    .topOuterDeckCardGrid{
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-
-        width: 95%;
-        margin: 0 auto;
-
-        padding: 16px 16px 4rem; /* ← bottom breathing room */
-        box-sizing: border-box;
-
-        height: auto;
-        justify-content: center;
-    }
 }

@@ -2,21 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import '../App.css'
 import './panel.css'
 import './AccountPanel.css'
+import '../components/MiniDeck.css'
 import type { User, Deck, Card, Reading, Spread } from '../types'
 import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo, faTrash } from '@fortawesome/free-solid-svg-icons';
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-}
+import { formatDate } from '../types'
+import MiniReading from '../components/MiniReading'
+import Modal from '../components/Modal'
+import InfoPage from '../components/InfoPage'
 
 interface AccountProps {
     user: User | null
@@ -24,18 +18,18 @@ interface AccountProps {
     login: () => void
     handleLogout: () => void
     selectedDeck: Deck | null
-    setLoading: (loading: boolean) => void
     token: string | null
     showAlert: (msg: string) => void
+    setLoading: (loading: boolean) => void
+    isMobile: () => boolean
 }
-function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, token, showAlert }: AccountProps) {
+function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, token, showAlert, isMobile }: AccountProps) {
     const [cards, setCards] = useState<Card[]>([]);
     const [readings, setReadings] = useState<Reading[]>([]);
     const [spreads, setSpreads] = useState<Spread[]>([]);
     const navigate = useNavigate();
-    const [infoModalOpen, setInfoModalOpen] = useState<boolean>(false);
-    const infoModalRef = useRef<HTMLDivElement | null>(null);
     const [editingReadings, setEditingReadings] = useState<boolean>(false);
+        const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
      // Load all user readings
     useEffect(() => {
         if (!user || !token) return;
@@ -90,17 +84,6 @@ function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, tok
         loadReadings();
         }, [user, token]);
 
-    useEffect(() => {
-        if(infoModalRef.current === null){
-            return;
-        }
-        if(infoModalOpen === true){
-            infoModalRef.current.style.display = "flex";
-        }else if(infoModalOpen === false){
-            infoModalRef.current.style.display = "none";
-        }
-    }, [infoModalOpen]);
-
     const deleteReading = async (readingId: string) => {
         if (!readingId || !token || !user) {
             showAlert('Authentication error');
@@ -134,7 +117,7 @@ function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, tok
         <>
             <div className='panel'>
                 <div className='panelTitle'>
-                    <button className='infoBtn' onClick={()=>setInfoModalOpen(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
+                    <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
                     <h2>Account</h2>
                 </div>
                 {user ? (
@@ -147,9 +130,11 @@ function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, tok
                                 <p>{user.name}</p>
                                 <p>{user.email}</p>
                             </div>
-                            <button className="accountLoginBtn" onClick={handleLogout}>
-                            Log out
-                            </button>
+                            {!isMobile() && (
+                                <button className="accountLoginBtn" onClick={handleLogout}>
+                                    Log out
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="userArea">
@@ -164,102 +149,28 @@ function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, tok
                     <>
                     {editingReadings === false ? (
                         <>
-                        <h2 className='accountReadingsTitle'>Past Readings</h2>
-                            <div className='userReadingsGrid'>
+                            <h3 className='suitHeading'>Past Readings</h3>
+                            <div className='outerDeckGrid'>
                                 {readings.map((reading) => (
                                     <>
-                                        <div className='userReading' onClick={() => navigate(`/readings/${reading.id}`)}>
-                                            <div className="spreadImgOuter">
-                                                {reading.cards.map((cardId, idx) => {
-                                                    const card = cards.find(c => c.id === cardId);
-
-                                                    if (!card) return null;
-
-                                                    return (
-                                                    <div key={cardId} className="spreadImgBorder">
-                                                        <img
-                                                        src={`${selectedDeck?.images['card-front']}/${card.type.replaceAll(" ", "")}/${card.nameShort}.png`}
-                                                        className={reading.reversalValues[idx] === true ? "spreadImg upside-down" : "spreadImg"}
-                                                        alt={`Deck card ${card.name}`}
-                                                        />
-                                                    </div>
-                                                    );
-                                                })}
-                                                </div>
-                                            <h3 className='userReadingTitle'>{reading.name}</h3>
-                                            <p>{formatDate(reading.date)}</p>
-                                            {reading.reversals === true && (
-                                                <p>Reversals allowed.</p>
-                                            )}
-                                            <p>
-                                                {spreads.find(s => s.id === reading.spread)?.name}: {reading.cards.length} Cards
-                                            </p>
-                                            <p>{reading.topic}</p>
-                                        </div>
+                                        <MiniReading selectedDeck={selectedDeck} reading={reading} cards={cards} spreads={spreads} editingReadings={false}></MiniReading>
                                     </>
                                 ))}
                             </div>
-                            <button className='editReadingsBtn' onClick={()=>setEditingReadings(true)}>Edit Readings</button>
+                            <button className='backBtn' onClick={()=>setEditingReadings(true)}>Edit Readings</button>
                         </>
                     ):(
                         <>
-                        <h2 className='accountReadingsTitle'>Editing Past Readings</h2>
-                        <div className='userReadingsGrid'>
+                        <h3 className='suitHeading'>Editing Past Readings</h3>
+                        <div className='outerDeckGrid'>
                             {readings.map((reading) => (
-                                <div
-                                key={reading.id}
-                                className='userReading'
-                                style={{ cursor: "default" }}
-                                >
-                                <button
-                                    className="readingActionBtn"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        console.log("Action clicked for:", reading.id);
-                                        deleteReading(reading.id);
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faTrash}></FontAwesomeIcon>
-                                </button>
-
-                                <div className="spreadImgOuter">
-                                    {reading.cards.map((cardId, idx) => {
-                                    const card = cards.find(c => c.id === cardId);
-                                    if (!card) return null;
-
-                                    return (
-                                        <div key={cardId} className="spreadImgBorder">
-                                        <img
-                                            src={`${selectedDeck?.images['card-front']}/${card.type.replaceAll(" ", "")}/${card.nameShort}.png`}
-                                            className={
-                                            reading.reversalValues[idx]
-                                                ? "spreadImg upside-down"
-                                                : "spreadImg"
-                                            }
-                                            alt={`Deck card ${card.name}`}
-                                        />
-                                        </div>
-                                    );
-                                    })}
-                                </div>
-
-                                <h3 className='userReadingTitle'>{reading.name}</h3>
-                                <p>{formatDate(reading.date)}</p>
-
-                                {reading.reversals && <p>Reversals allowed.</p>}
-
-                                <p>
-                                    {spreads.find(s => s.id === reading.spread)?.name}:{" "}
-                                    {reading.cards.length} Cards
-                                </p>
-
-                                <p>{reading.topic}</p>
-                                </div>
+                                <>
+                                    <MiniReading selectedDeck={selectedDeck} reading={reading} cards={cards} spreads={spreads} editingReadings={true} onDeleteReading={deleteReading}></MiniReading>
+                                </>
                             ))}
                         </div>
-
                         <button
-                            className='editReadingsBtn'
+                            className='backBtn'
                             onClick={() => setEditingReadings(false)}
                             >
                             Done
@@ -269,45 +180,15 @@ function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, tok
                     </>
                 )}
             </div>
-            <div className="modal" ref={infoModalRef}>
-                <div className="modal-content">
-                    <span className="close" onClick={()=>setInfoModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Info</h2>
-                    <div className='infoModals'>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Welcome to the Account Page! 
-                        </p>
-                        {user !== null ? (
-                            <>
-                                <p className='infoModalPt'>
-                                    <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                    You are logged in! This is where all your account information lives!
-                                </p>
-                                <p className='infoModalPt'>
-                                    <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                    Your history of readings will also be displayed here. Click on a reading to go to see more information in the larger Reading page. 
-                                </p>
-                                <p className='infoModalPt'>
-                                    <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                    You can also add notes in the larger Reading page to keep your thoughts
-                                </p>
-                                <p className='infoModalPt'>
-                                    <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                    Click the Edit Reading button to delete any unwanted readings! Think twice, this is not reversable.
-                                </p>
-                            </>
-                        ):(
-                            <>
-                                <p className='infoModalPt'>
-                                    <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                    You are not logged in! Log in to use this page!
-                                </p>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
+            <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
+                <InfoPage infoMessages={[
+                    `Welcome to the Account Page!`,
+                    `You are logged in! This is where all your account information lives!`,
+                    `Your history of readings will also be displayed here. Click on a reading to go to see more information in the larger Reading page.`,
+                    `You can also add notes in the larger Reading page to keep your thoughts.`,
+                    `Click the Edit Reading button to delete any unwanted readings! Think twice, this is not reversable.`
+                ]} />
+            </Modal>
         </>
     )
 }

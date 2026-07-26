@@ -1,43 +1,60 @@
 .outerDeckGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 1rem;
+  row-gap: 1.5rem;
+  /* align-items removed — grid's default "stretch" behavior is what we want now */
 
-  width: 85%;
+  width: 95%;
   margin: 0 auto;
 
-  padding: 16px 16px 4rem; /* ← bottom breathing room */
   box-sizing: border-box;
 
   height: auto;
+  margin-bottom: 1rem;
 }
 
 .deckOuter{
-    height: 100%;
+    width: 100%;
     background-color: var(--accent-background);
-    justify-content: center;
-    align-items: center;
     display: flex;
     flex-direction: column;
-    padding-top: 2.5%;
-    padding-bottom: 2.5%;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    box-sizing: border-box;
     border-radius: var(--border-radius);
     cursor: pointer;
     position: relative;
-    border: 0.25rem solid var(--accent-background);
     box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    /* overflow: hidden removed from here */
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.deckCheckmark {
-  position: absolute;
-  top: -0.5rem;
-  right: -0.5rem;
+.deckOuterInner{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 1rem;
+    box-sizing: border-box;
+    border-radius: var(--border-radius); /* re-apply rounding so clipped content still looks correct */
+    overflow: hidden; /* moved here — clips image/text, not the checkmark badge */
+}
 
-  width: 2.5rem;
-  height: 2.5rem;
 
-  background-color: var(--secondary-background);
-  color: var(--secondary-text);
+.deckCheckmarkSelected{
+    position: absolute;
+  top: -0.75rem;
+  right: -0.75rem;
+
+  width: 3rem;
+  height: 3rem;
+
+  background-color: var(--main-background);
+  color: var(--accent-background);
   border-radius: 50%;
 
   display: flex;
@@ -48,69 +65,141 @@
   z-index: 5;
 
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  border: none;
 }
-
-.selectedDeck{
-    border-color: var(--secondary-background) !important;
-}
-
-
 
 .deckImgOuter{
     background-color: var(--secondary-background);
-    width: 80%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem;
-    border-radius: var(--border-radius);
-}
-
-.deckImg{
-    width: 100%;
-    height: auto;
-    border-radius: var(--border-radius);
-}
-
-
-.deckTitle {
-  font-size: 1.5rem;
-  text-align: center;
-  margin: 0;
-  padding: 0;
-}
-
-.deckDesc{
-    margin: 0;
-    padding: 0;
-    font-size: 0.85rem;
-    margin: 4px 0;
-    /* ellipsis magic */
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 5; /* ← number of visible lines */
-    overflow: hidden;
-
-    word-break: break-word;
     width: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4%;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
+    flex: 0 0 auto; /* was 1 1 auto — no longer grows to fill leftover space */
+    overflow: hidden;
 }
-
-
-
 
 .deckImgBorder{
     width: 48%;
-    height: 100%;
-    height: auto;
+    height: fit-content;
     display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+}
+
+.deckImg{
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: var(--border-radius-small);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.cardInfoOuter{
+    display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 
+.deckTitle {
+  font-size: 1.1rem;
+  text-align: center;
+  margin: 0;
+  width: 100%;
+  flex-shrink: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.deckDesc{
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    text-align: center;
+    width: 100%;
+    flex-shrink: 0;
 
-/* Phone */
-@media (max-width: 767px) {
-    .outerDeckGrid{
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    word-break: break-word;
+
+    max-height: calc(1.4em * 3); /* line-height × number of clamped lines, exact boundary */
+    padding: 0; /* padding moved to a wrapper below so it can't offset the clamp box */
+}
+
+.deckDescWrapper{
+    width: 100%;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    box-sizing: border-box;
+}
+.deckCheckmark {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.75rem;
+
+  width: 3rem;
+  height: 3rem;
+
+  background-color: var(--accent-background);
+  border: 2px solid var(--main-background);
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 1rem;
+  color: var(--accent-text);
+  cursor: pointer;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  z-index: 5;
+
+  /* Circle itself is always visible now — only visible on hover was removed here */
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
+}
+
+.deckOuter:hover .deckCheckmark{
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.deckCheckmarkIcon{
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.15s ease 0.05s, transform 0.15s ease 0.05s; /* slight delay so the circle appears first */
+}
+
+.deckCheckmark:hover .deckCheckmarkIcon{
+  opacity: 1;
+  transform: scale(1);
+}
+
+.deckCheckmark:hover{
+  background-color: var(--main-background);
+  color: var(--accent-background);
+  border-color: var(--accent-background);
+  transform: scale(1.1);
+}
+
+.deckCheckmark:active{
+  transform: scale(0.95);
 }

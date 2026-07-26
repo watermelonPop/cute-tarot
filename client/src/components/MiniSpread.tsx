@@ -1,20 +1,15 @@
 import type { User, Deck, Spread } from '../types'
 import { useNavigate } from 'react-router-dom'
-import RiderWaiteIcon from '../assets/images/Rider-Waite/card-icon.svg?react'
-import BunnyWaiteIcon from '../assets/images/Bunny-Waite/card-icon.svg?react'
 
 interface MiniSpreadProps {
     user: User | null
     selectedDeck: Deck | null
     spread: Spread
+    CardIcon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 }
 
-function MiniSpread({ selectedDeck, spread }: MiniSpreadProps) {
+function MiniSpread({ selectedDeck, spread, CardIcon }: MiniSpreadProps) {
     const navigate = useNavigate();
-    const SpreadIcon =
-      selectedDeck?.name?.replace(/[–—]/g, "-") === "Bunny-Waite"
-        ? BunnyWaiteIcon
-        : RiderWaiteIcon;
 
   return (
     <>
@@ -27,11 +22,11 @@ function MiniSpread({ selectedDeck, spread }: MiniSpreadProps) {
         <div className='spreadImgOuter'>
             {Array.from({ length: spread.numPulls }).map((_) => (
                 <div className='spreadImgBorder'>
-                    <SpreadIcon className="spreadImg"/>
+                    <CardIcon className="spreadImg"/>
                 </div>
             ))}
         </div>
-        <h3 className="spreadTitle">{spread.name}</h3>
+        <h2 className="spreadTitle"><span className="spreadTitleClamp">{spread.name}</span></h2>
         <p className='spreadDesc'>{spread.description}</p>
       </div>
     </>

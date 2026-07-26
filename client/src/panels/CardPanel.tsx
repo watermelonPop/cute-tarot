@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import '../App.css'
 import './panel.css'
 import type { User, Deck, Card } from '../types'
@@ -6,25 +6,73 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import InteractiveCard from '../components/InteractiveCard';
+import type { TocItem } from '../components/TableOfContents'
+import TableOfContents from '../components/TableOfContents';
+import Modal from '../components/Modal';
+import InfoPage from '../components/InfoPage';
 
-interface CardPanelProps {
-  user: User | null
-  selectedDeck: Deck | null
-  showAlert: (msg: string) => void
-  setLoading: (loading: boolean) => void
-  token: string | null
+function buildCardToc(card: Card): TocItem[] {
+    if(!card){
+        return [];
+    }
+  const items: TocItem[] = [
+    {
+      label: 'Keywords',
+      targetId: 'keywordsSection',
+    },
+    {
+      label: 'Description',
+      targetId: 'descriptionSection',
+    },
+  ]
+
+  const meaningChildren: TocItem[] = []
+
+  if (card.meaningUp) {
+    meaningChildren.push({ label: 'Upright', targetId: 'meaningUpright' })
+  }
+  if (card.meaningRev) {
+    meaningChildren.push({ label: 'Reversed', targetId: 'meaningReversed' })
+  }
+  if (card.meaningYesNo) {
+    meaningChildren.push({ label: 'Yes or No', targetId: 'meaningYesNo' })
+  }
+  if (card.meaningAdvice) {
+    meaningChildren.push({ label: 'Advice', targetId: 'meaningAdvice' })
+  }
+  if (card.meaningLove) {
+    meaningChildren.push({ label: 'Love and Relationships', targetId: 'meaningLove' })
+  }
+  if (card.meaningCareer) {
+    meaningChildren.push({ label: 'Career', targetId: 'meaningCareer' })
+  }
+
+  items.push({
+    label: 'Meanings',
+    targetId: 'meaningsSection',
+    children: meaningChildren,
+  })
+
+  return items
 }
 
-function CardPanel({ user, selectedDeck, showAlert, setLoading, token }: CardPanelProps){
+interface CardPanelProps {
+    user: User | null
+    selectedDeck: Deck | null
+    showAlert: (msg: string) => void
+    setLoading: (loading: boolean) => void
+    token: string | null
+}
+
+function CardPanel({ user, selectedDeck, showAlert, setLoading, token}: CardPanelProps){
     const [cards, setCards] = useState<Card[]>([])
     const { nameShort } = useParams()
     const navigate = useNavigate();
-    const [modalOpen, setModalOpen] = useState<boolean>(false);
-    const modalRef = useRef<HTMLDivElement | null>(null);
     const [adminEditing, setAdminEditing] = useState<boolean>(false);
 
     const [editableCard, setEditableCard] = useState<Card | null>(null);
-    const [showModal, setShowModal] = useState(false)
+    const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
+    const [showInspectModal, setShowInspectModal] = useState<boolean>(false);
 
     // Load all cards
     useEffect(() => {
@@ -40,17 +88,6 @@ function CardPanel({ user, selectedDeck, showAlert, setLoading, token }: CardPan
             setLoading(false);
         })
     }, [])
-
-    useEffect(() => {
-        if(modalRef.current === null){
-            return;
-        }
-        if(modalOpen === true){
-            modalRef.current.style.display = "flex";
-        }else if(modalOpen === false){
-            modalRef.current.style.display = "none";
-        }
-    }, [modalOpen]);
 
 
     // Find the card based on the URL param
@@ -128,12 +165,12 @@ function CardPanel({ user, selectedDeck, showAlert, setLoading, token }: CardPan
                         </>
                     ):(
                         <>
-                            <div className='cardHeading'>
+                            <div className='deeperPanelHeading'>
                                 <button className='backBtn' onClick={() => navigate('/cards')}>
                                     Back
                                 </button>
-                                <h2 className='innerCardTitle'>{currentCard?.name}</h2>
-                                <button className='infoBtn' onClick={()=>setModalOpen(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
+                                <h2 className='deeperPanelTitle'>{currentCard?.name}</h2>
+                                <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
                             </div>
                             <div className='innerCardImgs'>
                                 <div className='cardImgInnerBorder'>
@@ -152,7 +189,7 @@ function CardPanel({ user, selectedDeck, showAlert, setLoading, token }: CardPan
                                 </div>
                             </div>
                             <div className='outerEditBtn'>
-                                <button className='backBtn' onClick={()=>setShowModal(true)}>Inspect</button>
+                                <button className='backBtn' onClick={()=>setShowInspectModal(true)}>Inspect</button>
                                 <button className='backBtn' onClick={() => navigate(`/relations/${currentCard?.nameShort}`)}>Search Relations</button>
                             </div>
                             {
@@ -174,24 +211,25 @@ function CardPanel({ user, selectedDeck, showAlert, setLoading, token }: CardPan
                             {
                                 user?.type !== "Admin" || adminEditing === false ? (
                                     <>
-                                        <p>{currentCard?.value} - {currentCard?.type}</p>
-                                        <h3>Keywords</h3>
-                                        <p>Upright: {currentCard?.keywordsUp}</p>
-                                        <p>Reversed: {currentCard?.keywordsRev}</p>
-                                        <h3>Description</h3>
+                                        <TableOfContents items={buildCardToc(currentCard!)} />
+                                        <p className="centered">{currentCard?.value} - {currentCard?.type}</p>
+                                        <h3 id="keywordsSection" className="sectionHeading">Keywords</h3>
+                                        <p className="centered">Upright: {currentCard?.keywordsUp}</p>
+                                        <p className="centered">Reversed: {currentCard?.keywordsRev}</p>
+                                        <h3 id="descriptionSection" className="sectionHeading">Description</h3>
                                         <p className='cardParagraph'>{selectedDeck !== null ? currentCard?.descriptions[selectedDeck?.id]: ""}</p>
-                                        <h3>Meanings</h3>
-                                        <h4>Upright: </h4>
+                                        <h3 id="meaningsSection" className="sectionHeading">Meanings</h3>
+                                        <h4 id="meaningUpright" className="subHeading">Upright: </h4>
                                         <p className='cardParagraph'>{currentCard?.meaningUp}</p>
-                                        <h4>Reversed: </h4>
+                                        <h4 id="meaningReversed" className="subHeading">Reversed: </h4>
                                         <p className='cardParagraph'>{currentCard?.meaningRev}</p>
-                                        <h4>Yes or No: </h4>
+                                        <h4 id="meaningYesNo" className="subHeading">Yes or No: </h4>
                                         <p className='cardParagraph'>{currentCard?.meaningYesNo}</p>
-                                        <h4>Advice: </h4>
+                                        <h4 id="meaningAdvice" className="subHeading">Advice: </h4>
                                         <p className='cardParagraph'>{currentCard?.meaningAdvice}</p>
-                                        <h4>Love and Relationships: </h4>
+                                        <h4 id="meaningLove" className="subHeading">Love and Relationships: </h4>
                                         <p className='cardParagraph'>{currentCard?.meaningLove}</p>
-                                        <h4>Career: </h4>
+                                        <h4 id="meaningCareer" className="subHeading">Career: </h4>
                                         <p className='cardParagraph'>{currentCard?.meaningCareer}</p>
                                     </>
                                 ):(
@@ -318,47 +356,18 @@ function CardPanel({ user, selectedDeck, showAlert, setLoading, token }: CardPan
                     )
                 }
             </div>
-            <div className="modal" ref={modalRef}>
-                <div className="modal-content">
-                    <span className="close" onClick={()=>setModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Info</h2>
-                    <div className='infoModals'>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Welcome to the Card page for {currentCard?.name}! 
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            This page shows the back and front side of {currentCard?.name} for the selected deck,
-                            as well as detailed information including the keywords, description, and various meanings. 
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Click the inspect button to view a draggable 3d version of the card. 
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Click the Search Relations button to go to the relations generator with {currentCard?.name} already selected.
-                        </p>
-                        {user !== null ? (
-                            <>
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                The default selected deck is the Rider-Waite Deck. You are logged in, go to the decks page to select a different deck for your account!
-                            </p> 
-                            </>
-                        ):(
-                            <>
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                The default selected deck is the Rider-Waite Deck. Go to the decks page to select and browse using a different deck. You're logged out, so this selection only lasts until you refresh!
-                            </p> 
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
-            {showModal && (
+            <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
+                <InfoPage infoMessages={[
+                    `Welcome to the Card page for ${currentCard?.name}!`,
+                    `This page shows the back and front side of ${currentCard?.name} for the selected deck, as well as detailed information including the keywords, description, and various meanings.`,
+                    `Click the inspect button to view a draggable 3d version of the card.`,
+                    `Click the Search Relations button to go to the relations generator with ${currentCard?.name} already selected.`,
+                    user !== null ? 
+                        `The default selected deck is the Rider-Waite Deck. You are logged in, go to the decks page to select a different deck for your account!` :
+                        `The default selected deck is the Rider-Waite Deck. Go to the decks page to select and browse using a different deck. You're logged out, so this selection only lasts until you refresh!`
+                ]} />
+            </Modal>
+            {showInspectModal && (
                 <div className="cardModal">
                     <div
                     className="card3dScene"
@@ -369,7 +378,7 @@ function CardPanel({ user, selectedDeck, showAlert, setLoading, token }: CardPan
                         back={`${selectedDeck?.images['card-back']}`}
                     />
                     </div>
-                    <button className='physViewBtn' onClick={() => setShowModal(false)} style={{
+                    <button className='backBtn' onClick={() => setShowInspectModal(false)} style={{
                         backgroundColor: selectedDeck?.style['accent-background'],
                         color: selectedDeck?.style['accent-text']
                     }}>Close</button>

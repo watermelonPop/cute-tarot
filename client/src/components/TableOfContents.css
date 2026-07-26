@@ -1,0 +1,120 @@
+.tableContentsTitle{
+    margin: 0;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--secondary-text);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.tableTitleWrapper{
+    width: 95%;
+    border-bottom: 2px solid var(--main-background);
+}
+
+.tableOfContentsOuter{
+    background-color: var(--secondary-background);
+    width: 100%;
+    border-radius: var(--border-radius-small);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.tableOfContents{
+    width: 50%;
+    margin: 0;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    list-style: none;
+}
+
+.tableWrapper{
+    width: 95%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tableOfContents ul{
+    list-style: none;
+    margin: 0;
+    padding-left: 2.5rem;
+}
+
+/* Base row styling shared by every level */
+.tableOfContents li{
+    display: flex;
+    width: 97%;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: var(--secondary-text);
+    padding: 0.4rem 0.5rem;
+    border-radius: var(--border-radius-small);
+    transition: background-color 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+
+/* Top-level items: bolder, larger, clearly the primary entries */
+.tocLevel0{
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-top: 0.25rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    color: var(--accent-background);
+}
+
+/* Nested items: lighter weight, smaller, visually subordinate */
+.tableOfContents li[class^="tocLevel"]:not(.tocLevel0){
+    font-weight: 400;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.tableOfContents li:hover{
+    background-color: var(--main-background);
+    color: var(--accent-background);
+    transform: translateX(4px);
+}
+
+.tableOfContents li:hover::before{
+    transform: translateX(2px);
+}
+
+.tableOfContents li:active{
+    transform: translateX(4px) scale(0.98);
+}
+
+.tocLabel{
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s ease;
+}
+
+.tableOfContents li:hover .tocLabel{
+    border-bottom-color: var(--accent-background);
+}
+
+.tocChevron{
+    color: var(--secondary-text);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.tocLevel0 .tocChevron{
+    font-size: 0.95rem;
+}
+
+.tableOfContents li:hover .tocChevron{
+    transform: translateX(2px);
+    color: var(--accent-background);
+}

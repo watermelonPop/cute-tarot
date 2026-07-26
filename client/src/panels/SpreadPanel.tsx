@@ -6,8 +6,8 @@ import type { User, Deck, Spread} from '../types'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import RiderWaiteIcon from '../assets/images/Rider-Waite/card-icon.svg?react'
-import BunnyWaiteIcon from '../assets/images/Bunny-Waite/card-icon.svg?react'
+import Modal from '../components/Modal'
+import InfoPage from '../components/InfoPage'
 
 interface SpreadPanelProps {
     user: User | null
@@ -15,17 +15,17 @@ interface SpreadPanelProps {
     showAlert: (msg: string) => void
     setLoading: (loading: boolean) => void
     token: string | null
+    Icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 }
 
-function SpreadPanel({user, selectedDeck, showAlert, setLoading, token }: SpreadPanelProps) {
+function SpreadPanel({user, selectedDeck, showAlert, setLoading, token, Icon }: SpreadPanelProps) {
     const [spreads, setSpreads] = useState<Spread[]>([])
     const { spreadId } = useParams()
     const navigate = useNavigate()
-    const [infoModalOpen, setInfoModalOpen] = useState<boolean>(false);
-    const infoModalRef = useRef<HTMLDivElement | null>(null);
     const [adminEditing, setAdminEditing] = useState<boolean>(false);
     
     const [editableSpread, setEditableSpread] = useState<Spread | null>(null);
+    const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
     useEffect(() => {
         setLoading(true);
@@ -41,23 +41,7 @@ function SpreadPanel({user, selectedDeck, showAlert, setLoading, token }: Spread
             });
     }, []);
 
-    useEffect(() => {
-        if(infoModalRef.current === null){
-            return;
-        }
-        if(infoModalOpen === true){
-            infoModalRef.current.style.display = "flex";
-        }else if(infoModalOpen === false){
-            infoModalRef.current.style.display = "none";
-        }
-    }, [infoModalOpen]);
-
     const currentSpread = spreadId ? spreads.find(c => c.id === spreadId) : null
-
-    const SpreadIcon =
-      selectedDeck?.name?.replace(/[–—]/g, "-") === "Bunny-Waite"
-        ? BunnyWaiteIcon
-        : RiderWaiteIcon;
 
     useEffect(() => {
         if (currentSpread) {
@@ -114,12 +98,12 @@ function SpreadPanel({user, selectedDeck, showAlert, setLoading, token }: Spread
     return (
         <>
             <div className='panel'>
-                <div className='cardHeading'>
-                    <button className='deckHeadingBtn' onClick={() => navigate('/spreads')}>
+                <div className='deeperPanelHeading'>
+                    <button className='backBtn' onClick={() => navigate('/spreads')}>
                         Back
                     </button>
-                    <h2 className='innerCardTitle'>{currentSpread?.name} Spread</h2>
-                    <button className='infoBtn' onClick={()=>setInfoModalOpen(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
+                    <h2 className='deeperPanelTitle'>{currentSpread?.name}</h2>
+                    <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
                     {user?.type === "Admin" && (
                         adminEditing === true ? (
                             <button className='deckHeadingBtn' onClick={()=>setAdminEditing(false)}>
@@ -132,16 +116,29 @@ function SpreadPanel({user, selectedDeck, showAlert, setLoading, token }: Spread
                         )
                     )}
                 </div>
-                <div className='spreadCardImgs'>
+                <div className='innerCardImgs'>
                     {Array.from({ length: currentSpread?.numPulls ?? 0 }).map((_, i) => (
-                        <div key={i} className="cardImgInnerBorder">
-                            <SpreadIcon className="innerSpreadImg"/>
+                        <div className="cardImgInnerBorder">
+                            <div className="cardEffectLayer">
+                                <div className="cardBackOverlayWrapper">
+                                    <div className="innerCardImg cardAspect"></div>
+                                    <div className="cardBackTextWrapper">
+                                        <Icon className="cardBackLogo"/>
+                                        <div className="cardBackText">
+                                            {currentSpread?.pulls[i]}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ))}
-                </div>
+                </div>                                    
                 <div className='cardDescription'>
                     {user?.type !== "Admin" || adminEditing === false ? (
-                        <p>{currentSpread?.description}</p>
+                        <>
+                        <h3 className="sectionHeading">Description</h3>
+                        <p className="cardParagraph">{currentSpread?.description}</p>
+                        </>
                     ):(
                         <div className='cardEditInput'>
                             <label>Description: </label>
@@ -160,23 +157,12 @@ function SpreadPanel({user, selectedDeck, showAlert, setLoading, token }: Spread
                     )}
                 </div>
             </div>
-            <div className="modal" ref={infoModalRef}>
-                <div className="modal-content">
-                    <span className="close" onClick={()=>setInfoModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Info</h2>
-                    <div className='infoModals'>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Welcome to the {currentSpread?.name} Spread Page! 
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Each spread has a number of pulls, and a concept that aligns with each pull. 
-                            Ex: For the Past, Present, Future spread, there are 3 pulls, one representing past, another representing present, and the last representing future.
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
+                <InfoPage infoMessages={[
+                    `Welcome to the ${currentSpread?.name} Spread Page!`,
+                    `Each spread has a number of pulls, and a concept that aligns with each pull. Ex: For the Past, Present, Future spread, there are 3 pulls, one representing past, another representing present, and the last representing future.`,
+                ]} />
+            </Modal>
         </>
     )
 }

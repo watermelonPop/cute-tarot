@@ -8,24 +8,43 @@ interface MiniDeckProps {
   user: User | null
   selectedDeck: Deck | null
   deck: Deck
+  setUserSelectedDeck: (deckId: string) => void
 }
 
-function MiniDeck({ selectedDeck, deck }: MiniDeckProps) {
+function MiniDeck({ selectedDeck, deck, setUserSelectedDeck }: MiniDeckProps) {
     const navigate = useNavigate();
     if(selectedDeck === null || deck === null){
         return;
     }
+
+    const isSelected = selectedDeck.id === deck.id
+
+    const handleSelectClick = (e: React.MouseEvent) => {
+        e.stopPropagation() // prevent the card's own onClick (navigate) from also firing
+        setUserSelectedDeck(deck.id)
+    }
+
   return (
     <>
     <div
-        className={selectedDeck.id === deck.id ? "selectedDeck deckOuter": "deckOuter"}
+        className={isSelected ? "selectedDeck deckOuter": "deckOuter"}
         onClick={() => {
             navigate(`/decks/${deck.name}`)
         }}
         >
-        {selectedDeck.id === deck.id && (
-          <div className="deckCheckmark"><FontAwesomeIcon icon={faCheck}></FontAwesomeIcon></div>
+        {isSelected ? (
+          <div className="deckCheckmarkSelected"><FontAwesomeIcon icon={faCheck}></FontAwesomeIcon></div>
+        ) : (
+          <button
+            type="button"
+            className="deckCheckmark"
+            onClick={handleSelectClick}
+            aria-label={`Select ${deck.name} deck`}
+          >
+            <FontAwesomeIcon icon={faCheck} className="deckCheckmarkIcon"/>
+          </button>
         )}
+        <div className="deckOuterInner">
         <div className='deckImgOuter'>
             <div className='deckImgBorder'>
                 <img
@@ -42,8 +61,13 @@ function MiniDeck({ selectedDeck, deck }: MiniDeckProps) {
                 />
             </div>
         </div>
-        <h2 className="deckTitle">{deck.name}</h2>
-        <p className='deckDesc'>{deck.description}</p>
+        <div className="cardInfoOuter">
+            <h2 className="deckTitle">{deck.name}</h2>
+            <div className="deckDescWrapper">
+                <p className='deckDesc'>{deck.description}</p>
+            </div>
+        </div>
+        </div>
       </div>
     </>
   )

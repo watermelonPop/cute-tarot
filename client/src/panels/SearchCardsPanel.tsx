@@ -11,7 +11,6 @@ import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 interface SearchCardsPanelProps {
   user: User | null;
   selectedDeck: Deck | null;
-  width: number;
   showAlert: (msg: string) => void
   setLoading: (loading: boolean) => void
 }
@@ -25,7 +24,7 @@ const VALID_SUITS: Suit[] = [
   'Coins',
 ];
 
-function SearchCardsPanel({ user, selectedDeck, width, showAlert, setLoading }: SearchCardsPanelProps) {
+function SearchCardsPanel({ user, selectedDeck, showAlert, setLoading }: SearchCardsPanelProps) {
   const [resultCards, setResultCards] = useState<Card[]>([]);
   const navigate = useNavigate();
   const params = useParams();
@@ -156,7 +155,6 @@ function SearchCardsPanel({ user, selectedDeck, width, showAlert, setLoading }: 
             user={user}
             selectedDeck={selectedDeck}
             card={card}
-            width={width}
           />
         ))}
       </div>

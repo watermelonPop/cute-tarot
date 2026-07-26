@@ -1,13 +1,26 @@
+/*:root {
+  --main-background: #FCF7EB;
+  --main-text: black;
+  --secondary-background: #4C202D;
+  --secondary-text: white !important;
+  --accent-background: #FD9F9F;
+  --accent-text: black;
+  --border-radius: 1rem;
+  --border-radius-small: 0.5rem;
+  --card-ratio: 0.599;
+}*/
+
 
 :root {
   --main-background: #231942;
   --main-text: white;
   --secondary-background: #5E548E;
-  --secondary-text: black !important;
+  --secondary-text: black;
   --accent-background: #E0B1CB;
   --accent-text: black;
   --border-radius: 1rem;
   --border-radius-small: 0.5rem;
+  --card-ratio: 0.599;
 }
 
 /*:root {
@@ -31,7 +44,7 @@ body{
 h1{
   /*font-family: "Caprasimo", serif;*/
   font-family: "Literata", serif;
-  font-size: 4rem;
+  font-size: 2.5rem;
   font-weight: 800;
   text-align: center;
   text-shadow: 0 4px 10px rgba(0,0,0,0.4);
@@ -90,16 +103,24 @@ input, select{
 }
 
 .header{
-  background-color: var(--main-background);
   width: 100%;
   height: 15vh;
+  background-color: var(--main-background);
   display: flex;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
 }
 
+.headerLeft{
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  height: 100%;
+}
+
 .logo{
-  height: 85%;
+  height: 80%;
   width: auto;
   border-radius: var(--border-radius-small);
   color: var(--accent-text) !important;
@@ -118,62 +139,60 @@ input, select{
 }
 
 .tabContainer{
-  width: 85%;
-  height: 95%;
+  width: 95%;
+  height: 70%;
+  padding: 0 1.5%;
+  box-sizing: border-box;
   display: flex;
-  justify-content: center;
+  justify-content: space-between; 
   align-items: center;
+  gap: 2%;
   background-color: var(--secondary-background);
   border-radius: var(--border-radius);
   box-shadow: 0px 0px 16px 3px rgba(0,0,0,0.2);
   z-index: 1;
 }
 
+
+.accountLoginBtn{
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  box-shadow: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+
 .tabs{
-    position: relative;
-    display: flex;
-    width: 100%;
-    height: 100%;
-    justify-content: space-evenly;
-    align-items: center;
+  position: relative;
+  display: flex;
+  flex: 0 1 700px;
+  max-width: 700px;
+  height: 100%;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 0.5%;
 }
 
 .timeframe-indicator {
   position: absolute;
-  bottom: 10px;
-  height: 6px;
+  bottom: 6px;
+  height: 4px;
   width: 14.5%;
   border-radius: var(--border-radius);
-  border: 2px solid var(--accent-text);
+  border: 2px solid var(--secondary-text);
   background: var(--accent-background);
   z-index: 1;
   transition: left 0.4s cubic-bezier(.4,1.7,.7,1.01);
   left: 0;
 }
 
-.timeframe-indicator[data-selected="cards"] {
-  left: 1.5%;
-}
-
-.timeframe-indicator[data-selected="relations"] {
-  left: 18%;
-}
-
-.timeframe-indicator[data-selected="decks"] {
-  left: 34.5%;
-}
-
-.timeframe-indicator[data-selected="spreads"] {
-  left: 51%;
-}
-
-.timeframe-indicator[data-selected="readings"] {
-  left: 67%;
-}
-
-.timeframe-indicator[data-selected="account"] {
-  left: 84%;
-}
+.timeframe-indicator[data-selected="cards"] { left: 0.5%; }
+.timeframe-indicator[data-selected="relations"] { left: 17.2%; }
+.timeframe-indicator[data-selected="decks"] { left: 33.8%; }
+.timeframe-indicator[data-selected="spreads"] { left: 50.5%; }
+.timeframe-indicator[data-selected="readings"] { left: 67.2%; }
+.timeframe-indicator[data-selected="account"] { left: 83.8%; }
 
 
 
@@ -186,9 +205,18 @@ input, select{
   align-items: flex-start; /* IMPORTANT */
 }
 
+.panelBuffer{
+  width: 95%;
+  border-radius: var(--border-radius);
+  background-color: var(--secondary-background);
+  min-height: 82vh;
+}
+
 
 .title{
-  color: var(--main-text);
+  color: var(--secondary-text);
+  margin: 0;
+  white-space: nowrap;
 }
 
 .loginBtn{
@@ -209,7 +237,6 @@ input, select{
   border-radius: var(--border-radius);
   font-family: "Literata", serif;
   outline: none;
-  border: 2px solid var(--accent-text);
   font-size: 1rem;
   font-weight: 700;
   text-decoration: none;
@@ -219,69 +246,139 @@ input, select{
   align-items: center;
 }
 
-.tabs a{
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  border-radius: var(--border-radius);
+.tabs button.accountLoginBtn{
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 0.75rem 0.5rem;
+  border-radius: 0.75rem;
   font-family: "Literata", serif;
   outline: none;
-  border: 2px solid var(--accent-text);
-  font-size: 1rem;
+  border: 2px solid var(--secondary-text);
+  font-size: 0.95rem;
   font-weight: 700;
-  text-decoration: none;
-  color: var(--accent-text);
-  width: 13%;
+  color: var(--secondary-text);
+  cursor: pointer;
+  min-width: 0;
   display: flex;
   justify-content: center;
   align-items: center;
+  white-space: nowrap;
+}
+
+.tabs.tabsWide{
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5%;
+}
+
+.tabs a,
+.menuBtn{
+  padding: 0.75rem  0.5rem;
+  border-radius: 0.75rem; 
+  font-family: "Literata", serif;
+  outline: none;
+  border: 2px solid var(--secondary-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--secondary-text) !important;
+  background: transparent;
+  cursor: pointer;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  white-space: nowrap;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  box-shadow: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.tabs button.menuBtn{
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: auto;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--border-radius-small);
+  background: transparent;
+  background-color: transparent;
+}
+
+.tabs button.menuBtn:hover{
+  background-color: var(--accent-background);
+  color: var(--accent-text) !important;
+  border-color: var(--accent-text);
 }
 
 .tabs a.selected {
-    background-color: var(--accent-background);
-    color: var(--accent-text);
-    border-color: var(--accent-text);
+  background-color: var(--accent-background);
+  color: var(--accent-text);
+  border-color: var(--secondary-text);
 }
 
 .noclick{
   cursor: default;
 }
 
-.infoBtn{
+.infoBtn {
+  /* 1. Reset standard browser borders & padding */
   padding: 0;
-  border-radius: var(--border-radius);
+  border: none; /* ← CRITICAL: Removes default browser outline borders */
+  background-color: var(--accent-background); /* Changed from pink, or keep pink if you want a background circle */
+  
+  /* 2. Shrink-wrap the icon perfectly using Flexbox */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* 3. Shape and sizing control */
+  font-size: 2rem; /* Controls the font-awesome icon size directly */
+  width: 1.9rem;     /* Explicitly lock the width matching the font-size */
+  height: 1.9rem;    /* Explicitly lock the height matching the font-size */
+  border-radius: 50%;
+  aspect-ratio: 1/1 !important;
+
+  /* 4. Quality of Life styles */
+  outline: none;
+  cursor: pointer;
+  box-shadow: none;
+  color: var(--secondary-text);
+  line-height: 1; /* Eliminates text layout line-height buffers */
+}
+
+.backBtn{
+  padding: 0.75rem;
+  border-radius: 0.75rem;
   font-family: "Literata", serif;
   outline: none;
   border: 2px solid transparent;
-  font-size: 2rem;
+  font-size: 1rem;
   font-weight: 700;
-  background-color: transparent;
-  color: var(--main-text);
+  background-color: var(--secondary-text);
+  color: var(--accent-background);
   cursor: pointer;
-  box-shadow: none;
 }
 
-.infoModals{
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow-y: scroll;
-}
-
-
-.infoModalPt{
+.mainBtn{
+    padding: 0.75rem;
+  border-radius: 0.75rem;
+  font-family: "Literata", serif;
+  outline: none;
+  border: 2px solid transparent;
+  font-size: 1rem;
+  font-weight: 700;
   background-color: var(--accent-background);
-  width: 85%;
-  padding: 1rem;
-  border-radius: var(--border-radius);
-  display: flex;
-  column-gap: 2%;
-  justify-content: flex-start;
-  align-items: center;
   color: var(--accent-text);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  cursor: pointer;
 }
 
 .scrollTopBtn {
@@ -309,93 +406,9 @@ input, select{
   transform: scale(1.1);
 }
 
-/* Phone */
-@media (max-width: 767px) {
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-  }
-
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  
-  h2{
-    font-size: 2.5rem;
-  }
-
-  h3{
-    font-family: "Literata", serif;
-    font-weight: 800;
-    font-size: 2rem;
-  }
-
-  h4{
-    font-size: 1.5rem;
-  }
-
-  p{
-    font-family: "Literata", serif;
-    font-size: 1.2rem;
-  }
-
-  .modal-content {
-    background-color: var(--secondary-background);
-    padding: 0;
-    margin: 0;
-
-    width: 100%;
-    height: 100vh !important;
-    max-height: 100vh !important;
-  }
-
-  .menuTitle{
-    margin: 0;
-    color: var(--secondary-text) !important;
-    width: 100%;
-    height: 15%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-top: 2.5%;
-    padding-bottom: 2.5%;
-    padding-left: 0%;
-    padding-right: 0%;
-  }
-
-  .menuLinks{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    row-gap: 1rem !important;
-  }
-
-  .menuLinks a{
-    font-family: "Literata", serif;
-    font-weight: 800;
-    font-size: 1.5rem;
-    text-decoration: none;
-    color: var(--secondary-text);
-    padding: 1rem;
-  }
-
-  .menuLoginBtn{
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    font-family: "Literata", serif;
-    outline: none;
-    border: 2px solid transparent;
-    font-size: 1rem;
-    font-weight: 700;
-    background-color: var(--main-text);
-    color: var(--main-background);
-    cursor: pointer;
-  }
-
-  .tabs button{
-    background-color: var(--accent-background);
-  }
+.close{
+  font-size: 2rem;
+  cursor: pointer;
+  color: var(--accent-text);
+  line-height: 1;
 }

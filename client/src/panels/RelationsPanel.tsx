@@ -2,33 +2,60 @@ import { useState, useEffect, useRef } from 'react'
 import '../App.css'
 import './panel.css'
 import './RelationsPanel.css'
-import Sparkles from '../components/Sparkles'
+import './CardsPanel.css'
 import type { User, Deck, Relation, Card, Suit } from '../types'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faCirclePlus } from '@fortawesome/free-solid-svg-icons';
+import Modal from '../components/Modal'
+import InfoPage from '../components/InfoPage'
+import SelectCardPage from '../components/SelectCardPage'
+import type { TocItem } from '../components/TableOfContents'
+import TableOfContents from '../components/TableOfContents'
+import CardSelect from '../components/CardSelect'
+
+function buildRelationToc(relation: Relation | null): TocItem[] {
+  if (!relation) {
+    return []
+  }
+
+  const items: TocItem[] = [
+    {
+      label: 'Description',
+      targetId: 'relationDescriptionSection',
+    },
+  ]
+
+  if (relation.descriptionAdvice) {
+    items.push({ label: 'Advice', targetId: 'relationAdviceSection' })
+  }
+  if (relation.descriptionLove) {
+    items.push({ label: 'Love and Relationships', targetId: 'relationLoveSection' })
+  }
+  if (relation.descriptionCareer) {
+    items.push({ label: 'Career', targetId: 'relationCareerSection' })
+  }
+
+  return items
+}
 
 interface RelationsPanelProps {
     user: User | null
     selectedDeck: Deck | null
-    width: number
     showAlert: (msg: string) => void
     setLoading: (loading: boolean) => void
     token: string | null
+    Icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 }
 
 
-function RelationsPanel({ user, selectedDeck, width, showAlert, setLoading, token }: RelationsPanelProps) {
+function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon}: RelationsPanelProps) {
     const [firstCard, setFirstCard] = useState<Card | null>(null);
     const [secondCard, setSecondCard] = useState<Card | null>(null);
-    const [modalOpen, setModalOpen] = useState<boolean>(false);
-    const [modalCard, setModalCard] = useState<number>(0);
     const [cards, setCards] = useState<Card[]>([])
     const [showDescription, setShowDescription] = useState(false);
     const [currentRelation, setCurrentRelation] = useState<Relation | null>(null);
     const modalRef = useRef<HTMLDivElement | null>(null);
-    const [infoModalOpen, setInfoModalOpen] = useState<boolean>(false);
-    const infoModalRef = useRef<HTMLDivElement | null>(null);
     const [isAnimating, setIsAnimating] = useState(false)
     const headingRef = useRef<HTMLHeadingElement | null>(null);
     const navigate = useNavigate();
@@ -36,17 +63,18 @@ function RelationsPanel({ user, selectedDeck, width, showAlert, setLoading, toke
 
     const [editableRelation, setEditableRelation] = useState<Relation | null>(null);
     
-
+    const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
+    const [showCardSelectModal, setShowCardSelectModal] = useState<{show: boolean, index: number}>({show: false, index: 0});
     const { nameShort1, nameShort2 } = useParams();
+    const location = useLocation();
 
     useEffect(() => {
         if (cards.length === 0) return;
 
-        // Always reset first
         let card1: Card | null = null;
         let card2: Card | null = null;
 
-        if (nameShort1) {
+        if (nameShort1 && nameShort1 !== 'none') {
             card1 = cards.find(c => c.nameShort === nameShort1) || null;
         }
 
@@ -58,36 +86,26 @@ function RelationsPanel({ user, selectedDeck, width, showAlert, setLoading, toke
         setSecondCard(card2);
     }, [cards, nameShort1, nameShort2]);
 
+    useEffect(() => {
+        if (cards.length === 0) return;
 
+        let path = '/relations';
+        if (firstCard && secondCard) {
+            path = `/relations/${firstCard.nameShort}/${secondCard.nameShort}`;
+        } else if (firstCard) {
+            path = `/relations/${firstCard.nameShort}`;
+        } else if (secondCard) {
+            path = `/relations/none/${secondCard.nameShort}`;
+        }
+
+        if (location.pathname !== path) {
+            navigate(path, { replace: true });
+        }
+    }, [firstCard, secondCard]);
 
 
     useEffect(() => {
-        if(modalRef.current === null){
-            return;
-        }
-        if(modalOpen === true){
-            setCurrentRelation(null);
-            modalRef.current.style.display = "flex";
-        }else if(modalOpen === false){
-            modalRef.current.style.display = "none";
-        }
-    }, [modalOpen]);
-
-    useEffect(() => {
-        if(infoModalRef.current === null){
-            return;
-        }
-        if(infoModalOpen === true){
-            setCurrentRelation(null);
-            infoModalRef.current.style.display = "flex";
-        }else if(infoModalOpen === false){
-            infoModalRef.current.style.display = "none";
-        }
-    }, [infoModalOpen]);
-
-    useEffect(() => {
-        setModalOpen(false);
-        setModalCard(0);
+        setShowCardSelectModal({show: false, index: 0});
     }, [firstCard, secondCard]);
 
     useEffect(() => {
@@ -277,49 +295,15 @@ function RelationsPanel({ user, selectedDeck, width, showAlert, setLoading, toke
             <>
             {isAnimating && <div className="sparkleOverlay" />}
             <div className='panelTitle'>
-                <button className='infoBtn' onClick={()=>setInfoModalOpen(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
+                <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
                 <h2>Relations</h2>
+                <span className='infoBtn' style={{backgroundColor: "transparent"}}></span>
             </div>
-            <div className='relationCardIcons'>
-                {
-                firstCard === null ? (
-                    <div className="relationCardWrapper">
-                        <div className="cardEffectLayer">
-                            {isAnimating && <Sparkles />}
-                            <div className="cardBackOverlayWrapper">
-                                <img
-                                    src={`${selectedDeck?.images['card-back']}`}
-                                    className="relationCardImg"
-                                    alt={`Deck back`}
-                                    onClick={() => {
-                                        setModalCard(1)
-                                        setModalOpen(true)
-                                        setShowDescription(false);
-                                    }}
-                                />
-                                <div className="cardBackText">
-                                    Click to select card
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ):(
-                    <div className="relationCardWrapper">
-                        <div className="cardEffectLayer">
-                            {isAnimating && <Sparkles />}
-                            <img
-                                src={`${selectedDeck?.images['card-front']}/${firstCard.type.replaceAll(" ", "")}/${firstCard.nameShort}.png`}
-                                className="relationCardImg"
-                                alt={`Deck card ${firstCard.name}`}
-                                onClick={() => {
-                                    setModalCard(1)
-                                    setModalOpen(true)
-                                }}
-                            />
-                        </div>
-                    </div>
-                )
-                }
+            <div className='innerCardImgs relationCardRow'>
+                <CardSelect isAnimating={isAnimating} onSelect={() => {
+                        setShowCardSelectModal({show: true, index: 1});
+                        setShowDescription(false);
+                    }} Icon={Icon} selectedCard={firstCard} selectedDeck={selectedDeck!} reversals={false} allowSetReversals={true}/>
                 <div className="centerPlusWrapper">
                     {isAnimating ? (
                         <div className="starLoader">
@@ -345,51 +329,17 @@ function RelationsPanel({ user, selectedDeck, width, showAlert, setLoading, toke
                         ))}
                         </div>
                     ) : (
-                        <span className="centerPlus">+</span>
+                        <span className="centerPlus"><FontAwesomeIcon icon={faCirclePlus}></FontAwesomeIcon></span>
                     )}
                 </div>
-
-                {
-                secondCard === null ? (
-                    <div className="relationCardWrapper">
-                        <div className="cardEffectLayer">
-                            {isAnimating && <Sparkles />}
-                            <div className="cardBackOverlayWrapper">
-                                <img
-                                    src={`${selectedDeck?.images['card-back']}`}
-                                    className="relationCardImg"
-                                    alt={`Deck back`}
-                                    onClick={() => {
-                                        setModalCard(2)
-                                        setModalOpen(true)
-                                    }}
-                                />
-                                <div className="cardBackText">
-                                        Click to select card
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ):(
-                    <div className="relationCardWrapper">
-                        <div className="cardEffectLayer">
-                            {isAnimating && <Sparkles />}
-                            <img
-                                src={`${selectedDeck?.images['card-front']}/${secondCard.type.replaceAll(" ", "")}/${secondCard.nameShort}.png`}
-                                className="relationCardImg"
-                                alt={`Deck card ${secondCard.name}`}
-                                onClick={() => {
-                                    setModalCard(2)
-                                    setModalOpen(true)
-                                }}
-                            />
-                        </div>
-                    </div>
-                )
-                }
+                <CardSelect isAnimating={isAnimating} onSelect={() => {
+                        setShowCardSelectModal({show: true, index: 2});
+                    }} Icon={Icon} selectedCard={secondCard} selectedDeck={selectedDeck!} reversals={false} allowSetReversals={true}/>
             </div>
-            <button onClick={handleEnterClick}
-                disabled={isAnimating} className='enterBtn'>Enter</button>
+            <div className='outerEditBtn'>
+                <button onClick={handleEnterClick}
+                disabled={isAnimating} className='backBtn'>Enter</button>
+            </div>
             {user?.type === "Admin" && currentRelation !== null && showDescription === true && (
                 adminEditing === true ? (
                     <button className='enterBtn' onClick={()=>setAdminEditing(false)}>Cancel Edit</button>
@@ -400,117 +350,54 @@ function RelationsPanel({ user, selectedDeck, width, showAlert, setLoading, toke
             </>
 
             <>
-            <div className="modal" ref={modalRef}>
-                <div className="modal-content">
-                    <span className="close" onClick={()=>setModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Choose Card for Relation</h2>
-                    <div className='modalOuterCards'>
-                        {groupedCards.map((group) =>
-                            group.cards.length > 0 ? (
-                                <div key={group.suit} className='outerCardSuit'>
-                                <h3 className="suitHeading">{group.suit}</h3>
-
-                                <div className="modalOuterCardsGrid">
-                                    {group.cards.map((card) => {
-                                        return (
-                                            <div className="modalCardFace" 
-                                                onClick={()=>{
-                                                    if(modalCard === 1){
-                                                        setFirstCard(card);
-                                                    }else if(modalCard === 2){
-                                                        setSecondCard(card);
-                                                    }
-                                                }}
-                                            >
-                                                <div className='modalCardImgOuter'>
-                                                    {width >= 400 && (
-                                                        <div className='modalCardImgBorder'>
-                                                            <img
-                                                                src={`${selectedDeck?.images['card-back']}`}
-                                                                className="modalCardImg"
-                                                                alt={`Deck back`}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                    <div className='modalCardImgBorder'>
-                                                        <img
-                                                            src={`${selectedDeck?.images['card-front']}/${card?.type.replaceAll(" ", "")}/${card.nameShort}.png`}
-                                                            className="modalCardImg"
-                                                            alt={`${card.name}`}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <h3 className="cardTitle">{card.name}</h3>
-                                                <p className="cardDesc">
-                                                    {card.value} – {card.type}
-                                                </p>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                                </div>
-                            ) : null
-                        )}
-                    </div>
-                </div>
-            </div>
-            <div className="modal" ref={infoModalRef}>
-                <div className="modal-content">
-                    <span className="close" onClick={()=>setInfoModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Info</h2>
-                    <div className='infoModals'>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Welcome to the Card Relations page! 
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            This is a mix and match type generator. Select any 2 different cards in the tarot deck, and see how they relate!
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Accurate readings of a combination will always depend on the querent's question and the other surrounding cards. These combinations show just some of the possible interpretations. Treat this as an educational tool!
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            All card combinations have a description, but some have multiple descriptions for different subject matter.
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            When a card slot is clicked, a selection window will appear where the card options are displayed in order by suit. Just click to select!
-                        </p>
-                        {user !== null ? (
-                            <>
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                This page uses cards from the selected deck. 
-                                The default selected deck is the Rider-Waite Deck. You are logged in, go to the decks page to select a different deck!
-                            </p> 
-                            </>
-                        ):(
-                            <>
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                This page uses cards from the selected deck. 
-                                You are not logged in, so the selected deck will be the Rider-Waite Deck. Log in to select a different deck.
-                            </p> 
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
+            <Modal title={`Choose Card ${showCardSelectModal.index} for Relation`} showModal={showCardSelectModal.show} setShowModal={(show) => setShowCardSelectModal({show, index: showCardSelectModal.index})}>
+                {showCardSelectModal.index === 1 ? (
+                    <SelectCardPage
+                        showModal={showCardSelectModal.show}
+                        setShowModal={(show) => setShowCardSelectModal({show, index: 1})}
+                        groupedCards={groupedCards}
+                        setCard={setFirstCard}
+                        selectedDeck={selectedDeck!}
+                    />
+                ):(
+                    <SelectCardPage
+                        showModal={showCardSelectModal.show}
+                        setShowModal={(show) => setShowCardSelectModal({show, index: 2})}
+                        groupedCards={groupedCards}
+                        setCard={setSecondCard}
+                        selectedDeck={selectedDeck!}
+                    />
+                )}
+            </Modal>
+            <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
+                <InfoPage infoMessages={[
+                    `Welcome to the Card Relations page! `,
+                    `This is a mix and match type generator. Select any 2 different cards in the tarot deck, and see how they relate!`,
+                    `Accurate readings of a combination will always depend on the querent's question and the other surrounding cards. These combinations show just some of the possible interpretations. Treat this as an educational tool!`,
+                    `All card combinations have a description, but some have multiple descriptions for different subject matter.`,
+                    `When a card slot is clicked, a selection window will appear where the card options are displayed in order by suit. Just click to select!`,
+                    user !== null ? (
+                        `This page uses cards from the selected deck. 
+                        The default selected deck is the Rider-Waite Deck. You are logged in, go to the decks page to select a different deck!`
+                    ):(
+                        `This page uses cards from the selected deck. 
+                        You are not logged in, so the selected deck will be the Rider-Waite Deck. Log in to select a different deck.`
+                    )
+                ]} />
+            </Modal>
             </>
 
             {currentRelation !== null && showDescription && firstCard !== null && secondCard !== null ? (
                 <div className='cardDescription'>
                     {user?.type !== "Admin" || adminEditing === false ? (
                         <>
-                        <h2 ref={headingRef}>{firstCard.name} & {secondCard.name}</h2>
-                        <h3>Description</h3>
+                        <h2 className="cardDescTitle" ref={headingRef}>{firstCard.name} & {secondCard.name}</h2>
+                        <TableOfContents items={buildRelationToc(currentRelation)} />
+                        <h3 id="relationDescriptionSection" className="sectionHeading">Description</h3>
                         <p className='relationParagraph'>{currentRelation?.description}</p>
                         {currentRelation?.descriptionAdvice ? (
                             <>
-                            <h3>Advice</h3>
+                            <h3 id="relationAdviceSection" className="sectionHeading">Advice</h3>
                             <p>{currentRelation?.descriptionAdvice}</p>
                             </>
                         ):(
@@ -518,7 +405,7 @@ function RelationsPanel({ user, selectedDeck, width, showAlert, setLoading, toke
                         )}
                         {currentRelation?.descriptionLove ? (
                             <>
-                            <h3>Love and Relationships</h3>
+                            <h3 id="relationLoveSection" className="sectionHeading">Love and Relationships</h3>
                             <p>{currentRelation?.descriptionLove}</p>
                             </>
                         ):(
@@ -526,7 +413,7 @@ function RelationsPanel({ user, selectedDeck, width, showAlert, setLoading, toke
                         )}
                         {currentRelation?.descriptionCareer ? (
                             <>
-                            <h3>Career</h3>
+                            <h3 id="relationCareerSection" className="sectionHeading">Career</h3>
                             <p>{currentRelation?.descriptionCareer}</p>
                             </>
                         ):(

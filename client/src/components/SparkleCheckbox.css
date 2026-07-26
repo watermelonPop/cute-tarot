@@ -1,0 +1,36 @@
+/* The container wrapping both elements */
+.custom-checkbox-container {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Hide the native input out of view but keep it fully focusable for accessibility */
+input[type="checkbox"].hidden-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+/* Your custom-styled display checkbox */
+.checkbox-visual-box {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid;
+  border-radius: var(--border-radius-small);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Directly handle the SVG fill inside your CSS stylesheet using variables */
+.checkbox-svg-icon {
+  width: 80%;
+  height: 80%;
+}

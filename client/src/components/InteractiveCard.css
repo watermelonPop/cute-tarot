@@ -9,13 +9,21 @@
 .card3dWrapper {
   width: 320px;
   height: 520px;
+  position: relative;
   cursor: grab;
   user-select: none;
   touch-action: none;
+  transition: transform 0.15s ease; /* smooths the grab/release scale pop */
 }
 
 .card3dWrapper:active {
   cursor: grabbing;
+}
+
+.card3dWrapper:focus-visible {
+  outline: 2px solid var(--accent-background, #fff);
+  outline-offset: 6px;
+  border-radius: 12px;
 }
 
 .card3d {
@@ -23,11 +31,28 @@
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.05s linear;
+  will-change: transform;
+  /* No CSS transition here — rotation is driven frame-by-frame via JS
+     (drag, inertia, and spring-back all write transform directly) */
 }
 
 .card3dScene{
   border-radius: var(--border-radius);
+}
+
+.cardShadow {
+  position: absolute;
+  left: 50%;
+  bottom: -20px;
+  width: 80%;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  filter: blur(16px);
+  transform: translateX(-50%);
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
 }
 
 /* ===== CARD SIDES ===== */
@@ -39,7 +64,6 @@
   backface-visibility: hidden;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.4);
 }
 
 .physCardFace img {
@@ -51,7 +75,6 @@
   z-index: 1;
 }
 
-
 .physCardFront {
   transform: translateZ(1px);
 }
@@ -59,7 +82,6 @@
 .physCardBack {
   transform: rotateY(180deg);
 }
-
 
 .cardEdge {
   position: absolute;
@@ -106,4 +128,30 @@
   z-index: 2;
   pointer-events: none;
   mix-blend-mode: soft-light;
+}
+
+.cardHolo {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  mix-blend-mode: soft-light; /* was color-dodge — much gentler */
+  background-size: 200% 200%;
+  opacity: 0.6; /* was 0.9 */
+}
+
+.cardSparkle {
+  position: absolute;
+  width: 32px; /* was 26px — a bit bigger so they read clearly */
+  height: 32px;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.9));
+}
+
+.cardSparkle svg {
+  width: 100%;
+  height: 100%;
+  fill: #fff;
 }

@@ -8,6 +8,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import type { User, Reading, Deck, Relation, Spread, Card, Topic, DrawingMethod, Suit } from '../types'
 import { useNavigate } from 'react-router-dom'
+import SparkleCheckbox from '../components/SparkleCheckbox'
+import CardSelect from '../components/CardSelect'
+import Modal from '../components/Modal'
+import InfoPage from '../components/InfoPage'
+import SelectCardPage from '../components/SelectCardPage'
+import type { TocItem } from '../components/TableOfContents'
+import TableOfContents from '../components/TableOfContents'
 
 // Add this type declaration at the top of your file (after imports)
 declare global {
@@ -19,10 +26,10 @@ declare global {
 interface ReadingsPanelProps {
     user: User | null
     selectedDeck: Deck | null
-    width: number
     showAlert: (msg: string) => void
     setLoading: (loading: boolean) => void
     token: string | null
+    Icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 }
 
 // Update the loader function
@@ -60,12 +67,87 @@ const loadPdfLibraries = (): Promise<any> => {
     });
 };
 
-function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token }: ReadingsPanelProps) {
+function buildReadingToc(
+    selectedCards: (Card | null)[],
+    spread: Spread | null,
+    relations: Relation[],
+    cards: Card[],
+    topic: Topic,
+    reversals: boolean,
+    reversalValues: boolean[]
+): TocItem[] {
+    const items: TocItem[] = [];
+
+    selectedCards.forEach((card, i) => {
+        if (!card) return;
+
+        const hasTopicMeaning =
+            (topic === 'Advice' && card.meaningAdvice) ||
+            (topic === 'Love & Relationships' && card.meaningLove) ||
+            (topic === 'Career' && card.meaningCareer);
+
+        const children: TocItem[] = [
+            { label: 'Description', targetId: `cardDesc${i}` },
+            {
+                label: reversals && reversalValues[i] ? 'Meaning (Reversed)' : 'Meaning (Upright)',
+                targetId: `cardMeaning${i}`,
+            },
+        ];
+
+        if (topic !== 'General' && hasTopicMeaning) {
+            children.push({ label: `Meaning for ${topic}`, targetId: `cardSpecMeaning${i}` });
+        }
+
+        if (spread !== null && spread.name === 'Yes or No') {
+            children.push({ label: 'Finally: Yes or No?', targetId: 'cardYesNo' });
+        }
+
+        items.push({
+            label: `${spread?.pulls[i]}: ${card.name}`,
+            targetId: `cardTitle${i}`,
+            children,
+        });
+    });
+
+    if (spread !== null && spread.numPulls > 1) {
+        const combinedChildren: TocItem[] = relations.map((relation, rIdx) => {
+            const cardNames = relation.cards
+                .map(cardId => cards.find(c => c.id === cardId)?.name ?? 'Unknown card')
+                .join(' & ');
+
+            const hasTopicDescription =
+                (topic === 'Advice' && relation.descriptionAdvice) ||
+                (topic === 'Love & Relationships' && relation.descriptionLove) ||
+                (topic === 'Career' && relation.descriptionCareer);
+
+            const children: TocItem[] = [];
+            if (topic !== 'General' && hasTopicDescription) {
+                children.push({ label: `${cardNames} in ${topic}`, targetId: `relationSpecMeaning${rIdx}` });
+            }
+
+            return {
+                label: cardNames,
+                targetId: `relationName${rIdx}`,
+                children,
+            };
+        });
+
+        items.push({
+            label: 'Combined',
+            targetId: 'combined',
+            children: combinedChildren,
+        });
+    }
+
+    return items;
+}
+
+function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon }: ReadingsPanelProps) {
     const [cards, setCards] = useState<Card[]>([]);
     const [spreads, setSpreads] = useState<Spread[]>([]);
     const [drawingMethod, setDrawingMethod] = useState<DrawingMethod>('Manual');
     const [selectedSpreadId, setSelectedSpreadId] = useState<string | null>(null);
-    const [selectedCards, setSelectedCards] = useState<(Card | undefined)[]>([]);
+    const [selectedCards, setSelectedCards] = useState<(Card | null)[]>([]);
     const [reversals, setReversals] = useState<boolean>(false);
     const [reversalValues, setReversalValues] = useState<boolean[]>([]);
     const [relations, setRelations] = useState<Relation[]>([]);
@@ -81,8 +163,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
     const [readingName, setReadingName] = useState<string>("");
     const pdfRef = useRef<HTMLDivElement | null>(null);
     const navigate = useNavigate()
-    const [infoModalOpen, setInfoModalOpen] = useState<boolean>(false);
-    const infoModalRef = useRef<HTMLDivElement | null>(null);
+    const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
     // Load all cards
     useEffect(() => {
@@ -110,9 +191,9 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
     useEffect(() => {
         const s = spreads.find(sp => sp.id === selectedSpreadId);
         if (s) {
-            setSelectedCards(Array(s.numPulls).fill(undefined));
+            setSelectedCards(Array(s.numPulls).fill(null));
         }
-    }, [selectedSpreadId, spreads]);
+    }, [selectedSpreadId, spreads, drawingMethod]);
 
     useEffect(() => {
         setShowDescription(false);
@@ -141,21 +222,12 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
     }, [modalOpen]);
 
     useEffect(() => {
-        if(infoModalRef.current === null){
-            return;
-        }
-        if(infoModalOpen === true){
-            infoModalRef.current.style.display = "flex";
-        }else if(infoModalOpen === false){
-            infoModalRef.current.style.display = "none";
-        }
-    }, [infoModalOpen]);
-
-    useEffect(() => {
-        if(reversals === false){
+        if (reversals === false) {
             setReversalValues([]);
+        } else if (spread) {
+            setReversalValues(Array(spread.numPulls).fill(false));
         }
-    }, [reversals]);
+    }, [reversals, spread, drawingMethod]);
 
     const hasDuplicateCards = (cards: Card[]) => {
         const ids = cards.map(c => c.id);
@@ -453,15 +525,16 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
             <div className='panel'>
                 {isAnimating && <div className="sparkleOverlay" />}
                 <div className='panelTitle'>
-                    <button className='infoBtn' onClick={()=>setInfoModalOpen(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
+                    <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
                     <h2>Readings</h2>
+                    <span className='infoBtn' style={{backgroundColor: "transparent"}}></span>
                 </div>
                 <div className='readingsForm'>
                     <div className='topForm'>
                     {user !== null && (
                         <div className='readingsInputOuter'>
                             <label htmlFor="name-input">Reading Name: </label>
-                            <input id="name-input" type="text" onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            <input autoComplete="off" id="name-input" type="text" onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                     setReadingName(e.target.value)
                                 } value={readingName} >
                             </input>
@@ -511,73 +584,37 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
                     </div>
                     </div>
                     <div className='readingsCheckboxOuter'>
-                        <input
-                            id="reversals-checkbox"
-                            type="checkbox"
+                        <SparkleCheckbox
                             checked={reversals}
-                            onChange={(e) => setReversals(e.target.checked)}
+                            onChange={() => setReversals(!reversals)}
+                            unCheckedStyle={{backgroundColor: "var(--main-background)", borderColor: "var(--main-text)"}}
+                            checkedStyle={{backgroundColor: "var(--secondary-background)", borderColor: "var(--main-text)", color: "var(--accent-background)"}}
                         />
                         <label htmlFor="reversals-checkbox">Allow Reversals</label>
                     </div>
                     {drawingMethod === 'Manual' && spread && (
                         <div className='readingsInputOuter'>
-                            <div className='readingsCards'>
+                            <div className='innerCardImgs'>
                             {Array.from({ length: spread.numPulls }).map((_, i) => (
                                 <>
-                                <div className='checkReadingCardWrapper'>
-                                    <div className="cardEffectLayer">
-                                    {isAnimating && <Sparkles />}
-                                    <div className="readingCardWrapper" key={i} 
-                                    onClick={()=>{
-                                        setModalOpen(true);
+                                <CardSelect
+                                    isAnimating={isAnimating}
+                                    onSelect={() => {
                                         setModalCard(i);
-                                    }
-                                    }
-                                    >
-                                        {selectedCards[i] ? (
-                                            <img
-                                                src={`${selectedDeck?.images['card-front']}/${selectedCards[i].type.replaceAll(" ", "")}/${selectedCards[i].nameShort}.png`}
-                                                className={reversalValues[i] === true ? "readingCardImg upside-down" : "readingCardImg"}
-                                                alt={`Deck card ${selectedCards[i].name}`}
-                                            />
-                                        ) : (
-                                            <div className="cardBackOverlayWrapper">
-                                                    <img
-                                                        src={selectedDeck?.images['card-back']}
-                                                        className="readingCardImg"
-                                                        alt="Deck back"
-                                                    />
-                                                    <div className="cardBackText">
-                                                        Click to select card
-                                                    </div>
-                                            </div>
-                                        )}
-                                        </div>
-                                    </div>
-                                    {
-                                        reversals === true && (
-                                            <div className='reversedInput'>
-                                                <input
-                                                    id="reversedCardCheckbox"
-                                                    type="checkbox"
-                                                    checked={reversalValues[i]}
-                                                    onChange={(e) => {
-                                                        let newRevVals = [...reversalValues];
-                                                        newRevVals[i] = e.target.checked;
-                                                        setReversalValues(newRevVals);
-                                                    }
-                                                    }
-                                                />
-                                                {width >= 400 && (
-                                                    <label htmlFor="reversedCardCheckbox">Reversed</label>
-                                                )}
-                                                {width < 400 && (
-                                                    <label htmlFor="reversedCardCheckbox">Rev</label>
-                                                )}
-                                            </div>
-                                        )
-                                    }
-                                </div>
+                                        setModalOpen(true);
+                                    }}
+                                    Icon={Icon}
+                                    selectedCard={selectedCards[i]}
+                                    selectedDeck={selectedDeck!}
+                                    reversals={reversals}
+                                    reversalValue={reversalValues[i]}
+                                    setReversalValue={() => {
+                                        const newReversalValues = [...reversalValues];
+                                        newReversalValues[i] = !newReversalValues[i];
+                                        setReversalValues(newReversalValues);
+                                    }}
+                                    allowSetReversals={true}
+                                />
                                 </>
                             ))}
                             </div>
@@ -585,189 +622,70 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
                     )}
                     {drawingMethod === 'Virtual' && spread && (
                         <div className='readingsInputOuter'>
-                            <div className='readingsCards'>
+                            <div className='innerCardImgs'>
                             {Array.from({ length: spread.numPulls }).map((_, i) => (
                                 <>
-                                <div className='checkReadingCardWrapper'>
-                                    {isAnimating && <Sparkles />}
-                                    <div className="readingCardWrapper" key={i} 
-                                    >
-                                        {selectedCards[i] ? (
-                                            <img
-                                                src={`${selectedDeck?.images['card-front']}/${selectedCards[i]?.type.replaceAll(" ", "")}/${selectedCards[i]?.nameShort}.png`}
-                                                className={reversalValues[i] === true ? "readingCardImg upside-down" : "readingCardImg"}
-                                                alt={`Deck card ${selectedCards[i]?.name}`}
-                                            />
-                                        ) : (
-                                            <img
-                                                src={selectedDeck?.images['card-back']}
-                                                className="readingCardImg noclick"
-                                                alt="Deck back"
-                                            />
-                                        )}
-                                    </div>
-                                </div>
+                                <CardSelect
+                                    isAnimating={isAnimating}
+                                    onSelect={() => {}}
+                                    Icon={Icon}
+                                    selectedCard={selectedCards[i]}
+                                    selectedDeck={selectedDeck!}
+                                    reversals={reversals}
+                                    reversalValue={reversalValues[i]}
+                                    setReversalValue={() => {
+                                        const newReversalValues = [...reversalValues];
+                                        newReversalValues[i] = !newReversalValues[i];
+                                        setReversalValues(newReversalValues);
+                                    }}
+                                    allowSetReversals={false}
+                                />
                                 </>
                             ))}
                             </div>
                         </div>
                     )}
-                    <button className='getReadingBtn' onClick={handleEnterClick}
+                    
+                    <button className='backBtn' onClick={handleEnterClick}
                         disabled={isAnimating}>Get Reading</button>
+                
                     {createdReading !== null && showDescription && (
                         <>
-                        <div className='outerReading' ref={pdfRef}>
-                            <div className='topReadingOuter'>
-                            <h2 ref={headingRef}>Your Reading: </h2>
-                            {user !== null && (
-                                <button className='getReadingBtn' onClick={() => navigate(`/readings/${createdReading.id}`, { state: { scrollUp: true } })}>Go to Full Reading</button>
-                            )}
-                            <div>
-                                <h3 className='tableContentsTitle'>Table of Contents</h3>
-                                <ul className='tableOfContents'>
-                                    {selectedCards.map((card, i) => {
-                                        if (!card) return null;
-
-                                        const hasTopicMeaning =
-                                            (topic === 'Advice' && card.meaningAdvice) ||
-                                            (topic === 'Love & Relationships' && card.meaningLove) ||
-                                            (topic === 'Career' && card.meaningCareer);
-
-                                        return (
-                                            <>
-                                            <li onClick={()=>{ 
-                                                let el = document.getElementById(`cardTitle${i}`);
-                                                if(el !== null){
-                                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                                                }
-                                            }}>
-                                                {spread?.pulls[i]}: {card.name}
-                                            </li>
-                                                <ul>
-                                                    <li onClick={()=>{ 
-                                                        let el = document.getElementById(`cardDesc${i}`);
-                                                        if(el !== null){
-                                                            el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                                                        }
-                                                    }}>
-                                                        Description
-                                                    </li>
-                                                    {reversals === true && reversalValues[i] === true ? (
-                                                        <li onClick={()=>{ 
-                                                            let el = document.getElementById(`cardMeaning${i}`);
-                                                            if(el !== null){
-                                                                el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                                                            }
-                                                        }}>Meaning (Reversed)</li>
-                                                    ):(
-                                                        <li onClick={()=>{ 
-                                                            let el = document.getElementById(`cardMeaning${i}`);
-                                                            if(el !== null){
-                                                                el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                                                            }
-                                                        }}>Meaning (Upright)</li>
-                                                    )}
-                                                    {topic !== 'General' && hasTopicMeaning &&  (
-                                                        <>
-                                                            <li onClick={()=>{ 
-                                                                let el = document.getElementById(`cardSpecMeaning${i}`);
-                                                                if(el !== null){
-                                                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                                                                }
-                                                            }}>Meaning for {topic}</li>
-                                                        </>
-                                                    )}
-                                                    {
-                                                        spread !== null && spread.name === 'Yes or No' && (
-                                                            <li onClick={()=>{ 
-                                                                let el = document.getElementById(`cardYesNo`);
-                                                                if(el !== null){
-                                                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                                                                }
-                                                            }}>Finally: Yes or No?</li>
-                                                        )
-                                                    }
-                                                </ul>
-                                            </>
-                                        );
-                                    })}
-                                    {spread !== null && spread.numPulls > 1 && (
-                                        <>
-                                        <li onClick={()=>{ 
-                                            let el = document.getElementById('combined');
-                                            if(el !== null){
-                                                el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                                            }
-                                        }}>
-                                            Combined
-                                        </li>
-                                            <ul>
-                                                {relations.map((relation, rIdx) => {
-                                                    const cardNames = relation.cards
-                                                        .map(cardId => cards.find(c => c.id === cardId)?.name ?? 'Unknown card')
-                                                        .join(' & ');
-
-                                                    const hasTopicDescription =
-                                                        (topic === 'Advice' && relation.descriptionAdvice) ||
-                                                        (topic === 'Love & Relationships' && relation.descriptionLove) ||
-                                                        (topic === 'Career' && relation.descriptionCareer);
-
-                                                    return (
-                                                        <>
-                                                        <li onClick={()=>{ 
-                                                            let el = document.getElementById(`relationName${rIdx}`);
-                                                            if(el !== null){
-                                                                el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                                                            }
-                                                        }}>{cardNames}</li>
-                                                        <ul>
-                                                        {topic !== 'General' && hasTopicDescription && (
-                                                            <li onClick={()=>{ 
-                                                                let el = document.getElementById(`relationSpecMeaning${rIdx}`);
-                                                                if(el !== null){
-                                                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                                                                }
-                                                            }}>
-                                                                {cardNames} in {topic}
-                                                            </li>
-                                                        )}
-                                                        </ul>
-                                                        </>
-                                                    );
-                                                })}
-                                            </ul>
-                                        </>
-                                    )}
-                                </ul>
+                        <div className='readingDescription' ref={pdfRef}>
+                            <div style={{ display: 'flex', columnGap: '1rem'}} ref={headingRef}>
+                                {user !== null && (
+                                    <button className='mainBtn getReadingBtn' onClick={() => navigate(`/readings/${createdReading.id}`, { state: { scrollUp: true } })}>Go to Full Reading</button>
+                                )}
+                                <button onClick={handleDownloadPDF} className='mainBtn getReadingBtn'>Download</button>
                             </div>
-                            </div>
+                            <TableOfContents items={buildReadingToc(selectedCards, spread, relations, cards, topic, reversals, reversalValues)} />
                             {selectedCards.map((card, i) => {
                                 if (!card) return null;
 
                                 return (
                                     <div key={i} className="readingResultCard">
-                                        <h3 id={`cardTitle${i}`}>
+                                        <h3 id={`cardTitle${i}`} className="sectionHeading">
                                             {spread?.pulls[i]}: {card.name}
                                         </h3>
 
-                                        <h4 id={`cardDesc${i}`}>Description</h4>
+                                        <h4 id={`cardDesc${i}`} className="subHeading">Description</h4>
                                         <p className='readingParagraph'>{card.descriptions[selectedDeck!.id]}</p>
 
                                         {reversals && reversalValues[i] ? (
                                             <>
-                                                <h4 id={`cardMeaning${i}`}>Meaning (Reversed)</h4>
+                                                <h4 id={`cardMeaning${i}`} className="subHeading">Meaning (Reversed)</h4>
                                                 <p className='readingParagraph'>{card.meaningRev}</p>
                                             </>
                                         ) : (
                                             <>
-                                                <h4 id={`cardMeaning${i}`}>Meaning (Upright)</h4>
+                                                <h4 id={`cardMeaning${i}`} className="subHeading">Meaning (Upright)</h4>
                                                 <p className='readingParagraph'>{card.meaningUp}</p>
                                             </>
                                         )}
 
                                         {topic !== 'General' && (
                                             <>
-                                                <h4 id={`cardSpecMeaning${i}`}>Meaning for {topic}</h4>
+                                                <h4 id={`cardSpecMeaning${i}`} className="subHeading">Meaning for {topic}</h4>
                                                 {reversals === true && reversalValues[i] === true && (
                                                     <>
                                                         <p>Remember: This card is reversed! Negate the following meaning.</p>
@@ -781,7 +699,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
 
                                         {spread?.name === 'Yes or No' && (
                                             <>
-                                                <h4 id={`cardYesNo`}>Finally: Yes or No?</h4>
+                                                <h4 id={`cardYesNo`} className="subHeading">Finally: Yes or No?</h4>
                                                 {reversals === true && reversalValues[i] === true && (
                                                     <>
                                                         <p>Remember: This card is reversed! Negate the following meaning.</p>
@@ -795,11 +713,11 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
                             })}
                             {spread !== null && spread.numPulls > 1 && (
                             <>
-                                <h3 id={`combined`}>Combined</h3>
+                                <h3 id={`combined`} className="sectionHeading">Combined</h3>
 
                                 {relations.map((relation, rIdx) => (
                                     <div key={rIdx} className="combinedRelation">
-                                        <h4 id={`relationName${rIdx}`}>
+                                        <h4 id={`relationName${rIdx}`} className="subHeading">
                                             {relation.cards
                                                 .map(cardId => {
                                                     const card = cards.find(c => c.id === cardId);
@@ -813,7 +731,7 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
                                             (topic === 'Love & Relationships' && relation.descriptionLove) ||
                                             (topic === 'Career' && relation.descriptionCareer)) && (
                                             <>
-                                            <h4 id={`relationSpecMeaning${rIdx}`}>
+                                            <h4 id={`relationSpecMeaning${rIdx}`} className="subHeading">
                                                 {relation.cards
                                                     .map(cardId => {
                                                         const card = cards.find(c => c.id === cardId);
@@ -836,117 +754,38 @@ function ReadingsPanel({ user, selectedDeck, width, showAlert, setLoading, token
                             </>
                         )}
                         </div>
-                        <button onClick={handleDownloadPDF} className='loginBtn'>Download</button>
                         </>
                     )}
                 </div>
             </div>
-            <div className="modal" ref={modalRef}>
-                <div className="modal-content">
-                    <span className="close" onClick={()=>setModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Choose Card for Reading</h2>
-                    <div className='modalOuterCards'>
-                        {groupedCards.map((group) =>
-                            group.cards.length > 0 ? (
-                                <div key={group.suit} className='outerCardSuit'>
-                                <h3 className="suitHeading">{group.suit}</h3>
-
-                                <div className="modalOuterCardsGrid">
-                                    {group.cards.map((card) => {
-                                        return (
-                                            <div className="modalCardFace" 
-                                                onClick={()=>{
-                                                    let newC = [...selectedCards];
-                                                    newC[modalCard] = card;
-                                                    setSelectedCards(newC);
-                                                    setModalOpen(false);
-                                                }}
-                                            >
-                                                <div className='modalCardImgOuter'>
-                                                    {width >= 400 && (
-                                                        <div className='modalCardImgBorder'>
-                                                            <img
-                                                                src={`${selectedDeck?.images['card-back']}`}
-                                                                className="modalCardImg"
-                                                                alt={`Deck back`}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                    <div className='modalCardImgBorder'>
-                                                        <img
-                                                            src={`${selectedDeck?.images['card-front']}/${card?.type.replaceAll(" ", "")}/${card.nameShort}.png`}
-                                                            className="modalCardImg"
-                                                            alt={`${card.name}`}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <h3 className="cardTitle">{card.name}</h3>
-                                                <p className="cardDesc">
-                                                    {card.value} – {card.type}
-                                                </p>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                                </div>
-                            ) : null
-                        )}
-                    </div>
-                </div>
-            </div>
-            <div className="modal" ref={infoModalRef}>
-                <div className="modal-content">
-                    <span className="close" onClick={()=>setInfoModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Info</h2>
-                    <div className='infoModals'>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Welcome to the Readings Page! 
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            The readings generated here are NOT full readings. That requires a human reader! This is just a fun and easy way to start readings, learn more about them, and keep track of them in your account! 
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Manual drawings allow you to draw cards physically, and select the cards here for the reading. Virtual drawings generate cards randomly for you!
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Choose a reading spread using the select. Go to the Spreads page to learn more about the different spread options!
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Cards can have different meanings if reversed. Choose whether reversals are allowed in this reading using the checkbox.
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Click download at the bottom of your reading to download as a pdf!
-                        </p> 
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            This reading uses cards from the currently selected deck.
-                            The default selected deck is the Rider-Waite Deck. You are logged in, go to the Decks page to select a different deck.
-                        </p> 
-
-                        {user !== null ? (
-                            <>
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                You're logged in! Any readings you create here will be automatically saved to your account! Go to the account page to view past readings, and keep notes on them!
-                            </p> 
-                            </>
-                        ):(
-                            <>
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                Anyone can create new readings and download them as PDFs, but only logged in users can save them to their account! You are not logged in. Go log in to save, view, and keep notes on your readings! 
-                            </p> 
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
+            <Modal title={`Choose Card for Reading`} showModal={modalOpen} setShowModal={setModalOpen}>
+                <SelectCardPage
+                    showModal={modalOpen}
+                    setShowModal={setModalOpen}
+                    groupedCards={groupedCards}
+                    setCard={(card: Card | null)=>{
+                        let newC = [...selectedCards];
+                        newC[modalCard] = card;
+                        setSelectedCards(newC);
+                        setModalOpen(false);
+                    }}
+                    selectedDeck={selectedDeck!}
+                />
+            </Modal>
+            <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
+                <InfoPage infoMessages={[
+                    `Welcome to the Readings Page! `,
+                    `The readings generated here are NOT full readings. That requires a human reader! This is just a fun and easy way to start readings, learn more about them, and keep track of them in your account! `,
+                    `Manual drawings allow you to draw cards physically, and select the cards here for the reading. Virtual drawings generate cards randomly for you!`,
+                    `Choose a reading spread using the select. Go to the Spreads page to learn more about the different spread options!`,
+                    `Cards can have different meanings if reversed. Choose whether reversals are allowed in this reading using the checkbox.`,
+                    `Click download at the top of your reading to download as a pdf!`,
+                    `This reading uses cards from the currently selected deck. The default selected deck is the Rider-Waite Deck. You are logged in, go to the Decks page to select a different deck.`,
+                    user !== null ? 
+                        `You're logged in! Any readings you create here will be automatically saved to your account! Go to the account page to view past readings, and keep notes on them!` :
+                        `Anyone can create new readings and download them as PDFs, but only logged in users can save them to their account! You are not logged in. Go log in to save, view, and keep notes on your readings! `
+                ]} />
+            </Modal>
         </>
     )
 }

@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import type { User, Deck } from './types'
-import RiderWaiteIcon from './assets/images/Rider-Waite/card-icon.svg?react'
-import BunnyWaiteIcon from './assets/images/Bunny-Waite/card-icon.svg?react'
+import RiderWaiteCardIcon from './assets/images/Rider-Waite/card-icon.svg?react'
+import BunnyWaiteCardIcon from './assets/images/Bunny-Waite/card-icon.svg?react'
+import RiderWaiteIcon from './assets/images/Rider-Waite/card-icon-small.svg?react'
+import BunnyWaiteIcon from './assets/images/Bunny-Waite/card-icon-small.svg?react'
 import './App.css'
+import './MobileApp.css'
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import CardsPanel from './panels/CardsPanel';
 import CardPanel from './panels/CardPanel';
@@ -20,8 +23,11 @@ import Alert from './components/Alert';
 import Loader from './components/Loader';
 import ScrollTopButton from './components/ScrollTopButton';
 import InstallPrompt from './InstallPrompt';
-import { useLocation, Routes, Route, NavLink, Navigate } from 'react-router-dom'
+import { useLocation, Routes, Route, NavLink, Navigate, matchPath } from 'react-router-dom'
 import type { NavLinkRenderProps } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBars } from '@fortawesome/free-solid-svg-icons';
+import SidebarMenu from './components/SidebarMenu'
 
 
 function isIos() {
@@ -36,31 +42,38 @@ function isInStandaloneMode() {
 }
 
 function App() {
+  const MOBILE_BREAKPOINT = 430;
+  const TABS_BREAKPOINT = 850;
   const [user, setUser] = useState<User | null>(null)
   const tabs = ["Cards", "Relations", "Decks", "Spreads", "Readings", "Account"];
   const [decks, setDecks] = useState<Deck[]>();
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
   const [width, setWidth] = useState(window.innerWidth);
-  const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const modalRef = useRef<HTMLDivElement | null>(null);
+
   const location = useLocation()
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+    const [loading, setLoading] = useState<boolean>(false);
+      const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [installCheckComplete, setInstallCheckComplete] = useState(false);
 
-  /*const currentTab = (() => {
-    const path = location.pathname.replace('/', '')
-    if (!path) return 'Cards'
-    return path.charAt(0).toUpperCase() + path.slice(1)
-  })()*/
-  const currentRoute = location.pathname.split('/')[1] || 'cards'
+  const [showOverlay, setShowOverlay] = useState<{show: boolean, item: string | null}>({show: false, item: null});
 
+  const currentRoute = location.pathname.split('/')[1] || 'cards'
+  
+  const CardIcon =
+    selectedDeck?.name?.replace(/[–—]/g, "-") === "Bunny-Waite"
+      ? BunnyWaiteCardIcon
+      : RiderWaiteCardIcon;
+  
+  const Icon = 
+    selectedDeck?.name?.replace(/[–—]/g, "-") === "Bunny-Waite"
+      ? BunnyWaiteIcon
+      : RiderWaiteIcon;
+  
   useEffect(() => {
     const handleResize = () => {
-      setWidth(window.innerWidth);
+        setWidth(window.innerWidth)
     };
 
     window.addEventListener('resize', handleResize);
@@ -70,11 +83,33 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (isIos() && !isInStandaloneMode()) {
-      setShowInstallPrompt(true);
+    const savedToken = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+
+    if (!savedToken || !savedUser) return;
+
+    const parsedUser = JSON.parse(savedUser);
+
+    setToken(savedToken);
+    setUser(parsedUser);
+
+    // restore their actual deck, not the default
+    if (parsedUser.selectedDeck) {
+      fetchDeckForUser(parsedUser.selectedDeck);
     }
 
-    setInstallCheckComplete(true);
+    fetch(`/api/users/check?id=${parsedUser.id}`, {
+      headers: { Authorization: `Bearer ${savedToken}` },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Invalid session');
+      })
+      .catch(() => {
+        setToken(null);
+        setUser(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      });
   }, []);
 
   useEffect(() => {
@@ -82,7 +117,7 @@ function App() {
       const scrollY = window.scrollY;
 
       // Show button after 300px scroll
-      setShowScrollTop(scrollY > 300);
+      setShowOverlay({show: scrollY > 300, item: "scrollTop"});
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -90,43 +125,57 @@ function App() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [showOverlay]);
 
   useEffect(() => {
     fetch('/api/decks')
       .then(res => res.json())
       .then(data => {
-        console.log(data);
         setDecks(data);
 
-        if (selectedDeck === null) {
-          const riderWaite = data.find(
-            (deck: Deck) =>
-              deck.name?.replace(/[–—]/g, "-") === "Rider-Waite"
-          );
+        // don't override a deck being restored for a logged-in user
+        const hasSavedSession = localStorage.getItem('token') && localStorage.getItem('user');
 
+        if (selectedDeck === null && !hasSavedSession) {
+          const riderWaite = data.find(
+            (deck: Deck) => deck.name?.replace(/[–—]/g, "-") === "Rider-Waite"
+          );
           setSelectedDeck(riderWaite ?? data[0]);
         }
       });
   }, []);
 
-
   useEffect(() => {
-    if(modalRef.current === null){
+    console.log('[theme effect] fired', { decks, selectedDeck, path: location.pathname });
+    if (decks === undefined) {
+        console.log('[theme effect] bail: decks undefined');
+        return;
+      }
+    if (decks === undefined) return;
+
+    // Check if we're on a /physical/:deckName/:cardNameShort route
+    const physicalMatch = matchPath(
+      '/physical/:deckName/:cardNameShort',
+      location.pathname
+    );
+
+    // Determine which deck's style to use
+    let activeDeck: Deck | null = selectedDeck;
+
+    if (physicalMatch) {
+      const routeDeckName = physicalMatch.params.deckName;
+      const matchedDeck = decks.find(
+        (deck) => deck.name?.replace(/[–—]/g, "-") === routeDeckName
+      );
+      activeDeck = matchedDeck ?? null;
+    }
+
+    if (activeDeck === null || activeDeck.style === null) {
+      console.log('[theme effect] bail: activeDeck undefined');
       return;
     }
-    if(menuOpen === true){
-        modalRef.current.style.display = "flex";
-    }else if(menuOpen === false){
-        modalRef.current.style.display = "none";
-    }
-  }, [menuOpen]);
 
-  useEffect(() => {
-    if(selectedDeck === null || selectedDeck.style === null){
-      return;
-    }
-    let selectedStyle = selectedDeck.style;
+    let selectedStyle = activeDeck.style;
 
     const requiredKeys = [
       'main-background',
@@ -139,12 +188,25 @@ function App() {
       'border-radius-small',
     ] as const;
 
-    // Ensure all required style values exist
+    for (const key of requiredKeys) {
+      if (selectedStyle[key] == null) {
+        console.warn(`Theme apply skipped — missing "${key}" on`, selectedStyle);
+        return;
+      }
+    }
+
     for (const key of requiredKeys) {
       if (selectedStyle[key] == null) return;
     }
 
-    const root = document.documentElement; // safer than querySelector
+    for (const key of requiredKeys) {
+      if (selectedStyle[key] == null) {
+        console.warn(`Theme apply skipped — missing "${key}" on`, selectedStyle);
+        return;
+      }
+    }
+
+    const root = document.documentElement;
 
     for (const [key, value] of Object.entries(selectedStyle)) {
       if (value != null) {
@@ -152,7 +214,6 @@ function App() {
       }
     }
 
-    // Dynamically update browser theme color
     const themeColor = selectedStyle['main-background'];
 
     if (themeColor) {
@@ -168,7 +229,15 @@ function App() {
 
       metaTheme.content = themeColor;
     }
-  }, [selectedDeck]);
+  }, [selectedDeck, decks, location.pathname]);
+
+  const isMobile = () => {
+    return width <= MOBILE_BREAKPOINT;
+  };
+
+  const isCollapsedTabs = () => {
+    return width <= TABS_BREAKPOINT;
+  }
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -192,12 +261,10 @@ function App() {
   }
 
   const login = useGoogleLogin({
-    flow: 'auth-code', // auth code flow
+    flow: 'auth-code',
     scope: 'openid email profile',
     onSuccess: async (codeResponse: { code: string }) => {
       try {
-        console.log('Received code:', codeResponse.code); 
-        // Send the auth code to our backend
         const res = await fetch('/api/auth/google', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -207,14 +274,13 @@ function App() {
         if (!res.ok) throw new Error(`Google login failed with status ${res.status}`);
         const { user, token } = await res.json();
 
-        // Save user and backend token
         setUser(user);
         setToken(token);
 
-        console.log('Logged in user:', user);
-        console.log('TOKEN: ' + token);;
+        // persist across refresh
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
 
-        // Optional: fetch user's selected deck
         if (user.selectedDeck) {
           fetchDeckForUser(user.selectedDeck);
         }
@@ -228,17 +294,20 @@ function App() {
   });
 
   const handleLogout = () => {
-    googleLogout()
-    setUser(null)
-    if(decks && decks.length > 0){
-      const riderWaite = decks.find(
-        (deck: Deck) =>
-          deck.name?.replace(/[–—]/g, "-") === "Rider-Waite"
-      );
+    googleLogout();
+    setUser(null);
+    setToken(null); // you weren't clearing this before either — worth fixing
 
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
+    if (decks && decks.length > 0) {
+      const riderWaite = decks.find(
+        (deck: Deck) => deck.name?.replace(/[–—]/g, "-") === "Rider-Waite"
+      );
       setSelectedDeck(riderWaite ?? decks[0]);
     }
-  }
+  };
 
   const showAlert = (message: string) => {
     setAlertMessage(message)
@@ -248,12 +317,45 @@ function App() {
     setAlertMessage(null)
   }
 
-  const HeaderIcon =
-  selectedDeck?.name?.replace(/[–—]/g, "-") === "Bunny-Waite"
-    ? BunnyWaiteIcon
-    : RiderWaiteIcon;
+  const setUserSelectedDeck = async (deckId: string) => {
+      if (!user || !token) {
+          showAlert("You're logged out, this selection will disappear when you refresh!");
+          const deckRes = await fetch(`/api/decks/${deckId}`);
+          const fullDeck = await deckRes.json();
+          setSelectedDeck(fullDeck);
+          return;
+      }
 
-  console.log("Selected deck:", selectedDeck?.name);
+      try {
+          const res = await fetch('/api/users/setDeck', {
+          method: 'POST',
+          headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ userId: user.id, deckId }),
+          });
+
+          if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Failed to set deck");
+          }
+
+          const updatedUser = await res.json();
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser)); // keep cache in sync
+
+          const deckRes = await fetch(`/api/decks/${deckId}`);
+          const fullDeck = await deckRes.json();
+          setSelectedDeck(fullDeck);
+
+      } catch (err) {
+          console.error("Set deck failed:", err);
+          showAlert("Failed to save deck selection.");
+      }
+  };
+
+
   return (
     <>
     {alertMessage && (
@@ -267,176 +369,155 @@ function App() {
       <Loader/>
     )}
       <div className='header'>
-        <HeaderIcon className="logo" />
-        <h1 className='title'>
-          {width >= 400 ? "Cute-Tarot":"Tarot"}
-        </h1>
-        {width >= 400 && (
-          user === null ? (
-            <button className="loginBtn" onClick={() => login()}>
-              Log In
-            </button>
-          ) : (
-            <button className="loginBtn" onClick={handleLogout}>
-              Log Out
-            </button>
-          )
-        )}
-      </div>
-      <div className='outerTabs'>
-        <div className='tabContainer'>
-          {width >= 400 && (
-            <div className="tabs">
-            {tabs.map((tab) => {
-              const path = tab.toLowerCase()
-              return (
-                <NavLink
-                  key={tab}
-                  to={`/${path}`}
-                  className={({ isActive }: NavLinkRenderProps) => isActive ? "selected" : ""}
-                >
-                  {tab}
-                </NavLink>
-              )
-            })}
-            <div
-                className="timeframe-indicator"
-                data-selected={currentRoute}
-              />
+        <div className="tabContainer">
+          <div className="headerLeft">
+            <CardIcon className="logo" />
+            <h1 className='title'>
+              Cute-Tarot
+            </h1>
           </div>
-          )}
-          {width < 400 && (
-            <div className="tabs">
-                <button onClick={()=>setMenuOpen(true)}>Menu</button>
-                {user === null ? (
-                  <button className="loginBtn" onClick={() => login()}>
-                    Log In
-                  </button>
-                ) : (
-                  <button className="loginBtn" onClick={handleLogout}>
-                    Log Out
-                  </button>
-                )}
-            </div>
-          )}
+          {
+            isCollapsedTabs() ? (
+              <div className="tabs">
+                <button className="menuBtn" onClick={() => setShowOverlay({show: true, item: "menu"})}>
+                  <FontAwesomeIcon icon={faBars}></FontAwesomeIcon>
+                  {!isMobile() && 
+                    "Menu"
+                  }
+                </button>
+              </div>
+            ):(
+              <div className="tabs tabsWide">
+                {tabs.map((tab) => {
+                  const path = tab.toLowerCase()
+
+                  if (tab === "Account") {
+                    return user === null ? (
+                      <button
+                        key={tab}
+                        className="accountLoginBtn"
+                        onClick={() => login()}
+                      >
+                        Log In
+                      </button>
+                    ) : (
+                      <NavLink
+                        key={tab}
+                        to="/account"
+                        className={({ isActive }: NavLinkRenderProps) => isActive ? "selected" : ""}
+                      >
+                        Account
+                      </NavLink>
+                    )
+                  }
+
+                  return (
+                    <NavLink
+                      key={tab}
+                      to={`/${path}`}
+                      className={({ isActive }: NavLinkRenderProps) => isActive ? "selected" : ""}
+                    >
+                      {tab}
+                    </NavLink>
+                  )
+                })}
+                <div
+                  className="timeframe-indicator"
+                  data-selected={currentRoute}
+                />
+              </div>
+            )
+          }
         </div>
       </div>
-      <div className="modal" ref={modalRef}>
-        <div className="modal-content">
-            <span className="close" onClick={()=>setMenuOpen(false)}>&times;</span>
-            <h2 className='menuTitle'>Menu</h2>
-            <div className='menuLinks'>
-              {tabs.map((tab) => {
-                const path = tab.toLowerCase()
-                return (
-                  <NavLink
-                    key={tab}
-                    to={`/${path}`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {tab}
-                  </NavLink>
-                )
-              })}
-            </div>
-            <div className='menuTitle'>
-              {user === null ? (
-                <button className="menuLoginBtn" onClick={() => login()}>
-                  Log In
-                </button>
-              ) : (
-                <button className="menuLoginBtn" onClick={handleLogout}>
-                  Log Out
-                </button>
-              )}
-            </div>
-        </div>
-    </div>
+      <SidebarMenu user={user} showOverlay={showOverlay} setShowOverlay={setShowOverlay} tabs={tabs} handleLogout={handleLogout} login={login} />
       <div className="outerPanel">
-        <Routes>
-          {!installCheckComplete ? (
-            <Route path="*" element={null} />
-          ) : showInstallPrompt ? (
+        <div className="panelBuffer">
+          <Routes>
+            {!installCheckComplete ? (
+              <Route path="*" element={null} />
+            ) : showInstallPrompt ? (
+              <Route
+                path="/"
+                element={<InstallPrompt setShowInstallPrompt={setShowInstallPrompt} />}
+              />
+            ) : (
+              <Route path="/" element={<Navigate to="/cards" replace />} />
+            )}
+
             <Route
-              path="/"
-              element={<InstallPrompt setShowInstallPrompt={setShowInstallPrompt} />}
+              path="/account"
+              element={<AccountPanel user={user} setUser={setUser} login={login} handleLogout={handleLogout} selectedDeck={selectedDeck} token={token} showAlert={showAlert} setLoading={setLoading} isMobile={isMobile}/>}
             />
-          ) : (
-            <Route path="/" element={<Navigate to="/cards" replace />} />
-          )}
 
-          <Route
-            path="/account"
-            element={<AccountPanel user={user} setUser={setUser} login={login} handleLogout={handleLogout} selectedDeck={selectedDeck} setLoading={setLoading} token={token} showAlert={showAlert}/>}
-          />
+            <Route
+              path="/cards/:nameShort"
+              element={<CardPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
+            />
 
-          <Route
-            path="/cards/:nameShort"
-            element={<CardPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
-          />
+            <Route
+              path="/cards"
+              element={<CardsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading}/>}
+            />
 
-          <Route
-            path="/cards"
-            element={<CardsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading}/>}
-          />
+            <Route
+              path="/relations"
+              element={<RelationsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+            />
 
-          <Route
-            path="/cards/search/:searchText?/:suitFilter?"
-            element={<SearchCardsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading}/>}
-          />
+            <Route
+              path="/relations/:nameShort1"
+              element={<RelationsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+            />
 
-          <Route
-            path="/relations"
-            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading} token={token}/>}
-          />
+            <Route
+              path="/relations/none/:nameShort2"
+              element={<RelationsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+            />
 
-          <Route
-            path="/relations/:nameShort1"
-            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading} token={token}/>}
-          />
+            <Route
+              path="/relations/:nameShort1/:nameShort2"
+              element={<RelationsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+            />
 
-          <Route
-            path="/relations/:nameShort1/:nameShort2"
-            element={<RelationsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading} token={token}/>}
-          />
+            <Route
+              path="/decks"
+              element={<DecksPanel user={user} selectedDeck={selectedDeck} setLoading={setLoading} setUserSelectedDeck={setUserSelectedDeck}/>}
+            />
 
-          <Route
-            path="/decks"
-            element={<DecksPanel user={user} selectedDeck={selectedDeck} setLoading={setLoading}/>}
-          />
+            <Route
+              path="/decks/:deckName"
+              element={<DeckPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} CardIcon={CardIcon} setUserSelectedDeck={setUserSelectedDeck} isMobile={isMobile}/>}
+            />
 
-          <Route
-            path="/decks/:deckName"
-            element={<DeckPanel user={user} selectedDeck={selectedDeck} setSelectedDeck={setSelectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
-          />
+            <Route
+              path="/spreads"
+              element={<SpreadsPanel user={user} selectedDeck={selectedDeck} setLoading={setLoading} CardIcon={CardIcon}/>}
+            />
 
-          <Route
-            path="/spreads"
-            element={<SpreadsPanel user={user} selectedDeck={selectedDeck} setLoading={setLoading}/>}
-          />
+            <Route
+              path="/spreads/:spreadId"
+              element={<SpreadPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+            />
 
-          <Route
-            path="/spreads/:spreadId"
-            element={<SpreadPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
-          />
+            <Route
+              path="/readings"
+              element={<ReadingsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+            />
 
-          <Route
-            path="/readings"
-            element={<ReadingsPanel user={user} selectedDeck={selectedDeck} width={width} showAlert={showAlert} setLoading={setLoading} token={token}/>}
-          />
+            <Route
+              path="/readings/:readingId"
+              element={<ReadingPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
+            />
 
-          <Route
-            path="/readings/:readingId"
-            element={<ReadingPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
-          />
-
-          <Route
-            path="/physical/:deckName/:cardNameShort"
-            element={<PhysicalCard />}
-          />
-        </Routes>
+            <Route
+              path="/physical/:deckName/:cardNameShort"
+              element={<PhysicalCard />}
+            />
+          </Routes>
+        </div>
       </div>
-      {showScrollTop && (
+      {showOverlay.show && showOverlay.item === "scrollTop" && (
         <ScrollTopButton scrollToTop={scrollToTop}/>
       )}
     </>

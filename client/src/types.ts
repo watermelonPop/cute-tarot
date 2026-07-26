@@ -71,3 +71,19 @@ export type DrawingMethod = 'Manual' | 'Virtual';
 
 export type Suit = 'Any' | 'Major Arcana' | 'Swords' | 'Cups' | 'Wands' | 'Coins';
 
+export function formatDate(iso: string) {
+  return new Date(iso).toLocaleString('en-US', {
+    month: 'numeric',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+export const ALL_SUITS: Exclude<Suit, 'Any'>[] = ['Major Arcana', 'Wands', 'Cups', 'Coins', 'Swords'];
+
+export function isValidSuit(value: string): value is Exclude<Suit, 'Any'> {
+    return (ALL_SUITS as string[]).includes(value);
+}

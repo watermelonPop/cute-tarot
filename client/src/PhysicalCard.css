@@ -1,7 +1,7 @@
 
 
 .physCardOuter{
-    background-color: lightblue;
+    background-color: var(--main-background);
     position: fixed;       /* Stays fixed relative to the viewport */
     top: 0;                /* Start at the top */
     left: 0;               /* Start at the left */
@@ -19,7 +19,7 @@
 }
 
 .physImgOuter{
-    background-color: blueviolet;
+    background-color: var(--secondary-background);
     display: flex;
     justify-content: center;
     align-items: center;

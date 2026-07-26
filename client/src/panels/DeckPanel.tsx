@@ -6,29 +6,34 @@ import type { User, Deck, Card, Suit } from '../types'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { Block } from '@uiw/react-color';
+import NoFlipMiniCard from '../components/NoFlipMiniCard'
 import RiderWaiteIcon from '../assets/images/Rider-Waite/card-icon.svg?react'
 import BunnyWaiteIcon from '../assets/images/Bunny-Waite/card-icon.svg?react'
-import { Block } from '@uiw/react-color';
+import Modal from '../components/Modal'
+import InfoPage from '../components/InfoPage'
 
 interface DeckPanelProps {
   user: User | null
   selectedDeck: Deck | null
-  setSelectedDeck: (deck: Deck) => void
+  setUserSelectedDeck: (deckId: string) => void
   showAlert: (msg: string) => void
   setLoading: (loading: boolean) => void
     token: string | null
+    CardIcon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
+    isMobile: () => boolean
 }
 
-function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert, setLoading, token }: DeckPanelProps) {
+function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoading, token, CardIcon, isMobile }: DeckPanelProps) {
     const [cards, setCards] = useState<Card[]>([])
     const [decks, setDecks] = useState<Deck[]>([])
     const { deckName } = useParams()
     const navigate = useNavigate()
-    const [infoModalOpen, setInfoModalOpen] = useState<boolean>(false);
-    const infoModalRef = useRef<HTMLDivElement | null>(null);
     const [adminEditing, setAdminEditing] = useState<boolean>(false);
 
     const [editableDeck, setEditableDeck] = useState<Deck | null>(null);
+    const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
+
 
     useEffect(() => {
         setLoading(true);
@@ -53,57 +58,12 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert, setLoading,
             });
     }, []);
 
-    useEffect(() => {
-        if(infoModalRef.current === null){
-            return;
-        }
-        if(infoModalOpen === true){
-            infoModalRef.current.style.display = "flex";
-        }else if(infoModalOpen === false){
-            infoModalRef.current.style.display = "none";
-        }
-    }, [infoModalOpen]);
-
-
-    const setUserSelectedDeck = async (deckId: string) => {
-        if (!user || !token) {
-            showAlert("You're logged out, this selection will disappear when you refresh!");
-
-            const deckRes = await fetch(`/api/decks/${deckId}`);
-            const fullDeck = await deckRes.json();
-            setSelectedDeck(fullDeck);
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/users/setDeck', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`  // 🔥 REQUIRED
-            },
-            body: JSON.stringify({
-                userId: user.id,   // must match JWT userId
-                deckId
-            }),
-            });
-
-            if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.error || "Failed to set deck");
-            }
-
-            const deckRes = await fetch(`/api/decks/${deckId}`);
-            const fullDeck = await deckRes.json();
-            setSelectedDeck(fullDeck);
-
-        } catch (err) {
-            console.error("Set deck failed:", err);
-            showAlert("Failed to save deck selection.");
-        }
-    };
-
     const currentDeck = deckName ? decks.find(c => c.name === deckName) : null
+
+    const SelectedIcon = 
+        currentDeck?.name?.replace(/[–—]/g, "-") === "Bunny-Waite"
+        ? BunnyWaiteIcon
+        : RiderWaiteIcon;
 
     useEffect(() => {
         if (currentDeck) {
@@ -177,11 +137,6 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert, setLoading,
             cards: suitCards,
         };
     });
-
-    const CurrDeckIcon =
-      currentDeck?.name?.replace(/[–—]/g, "-") === "Bunny-Waite"
-        ? BunnyWaiteIcon
-        : RiderWaiteIcon;
     
     if(currentDeck === null){
         return;
@@ -189,16 +144,16 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert, setLoading,
     return (
         <>
             <div className='panel'>
-                <div className='cardHeading'>
-                    <button className='infoBtn' onClick={()=>setInfoModalOpen(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
-                    <button className='deckHeadingBtn' onClick={() => navigate('/decks')}>
+                <div className='deeperPanelHeading'>
+                    <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
+                    <button className='backBtn' onClick={() => navigate('/decks')}>
                         Back
                     </button>
-                    <h2 className='innerCardTitle'>{currentDeck?.name} Deck</h2>
+                    <h2 className='deeperPanelTitle'>{currentDeck?.name} {!isMobile() && "Deck"}</h2>
                     {currentDeck?.name === selectedDeck?.name ? (
-                        <button className='deckHeadingBtn'>Selected</button>
+                        <button className='backBtn'>Selected</button>
                     ):(
-                        <button className='deckHeadingBtn unselectedBtn' onClick={()=> {
+                        <button className='backBtn unselectedBtn' onClick={()=> {
                             if(currentDeck){setUserSelectedDeck(currentDeck?.id)}
                         }}>Select</button>
                     )}
@@ -270,21 +225,29 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert, setLoading,
                 )}
                 <h3 className='innerSuitTitle'>Deck Icon & Back</h3>
                 <div className='topOuterDeckCardGrid'>
-                    <div className="topDeckCardOuter">
-                        <div className='deckCardImgOuter'>
-                            <CurrDeckIcon className="deckCardImg" />
+                    <div className="modalCardFace">
+                        <div className='modalCardImgOuter'>
+                            <div className='cardImgOuter'>
+                                <SelectedIcon className="cardImg" />
+                            </div>
                         </div>
-                        <h3 className="cardTitle">Card Icon</h3>
+                        <p className="cardDesc">
+                            Card Icon
+                        </p>
                     </div>
-                    <div className="topDeckCardOuter">
-                        <div className='deckCardImgOuter'>
-                            <img
-                                src={`${currentDeck?.images['card-back']}`}
-                                className="deckCardImg"
-                                alt={`Deck back`}
-                            />
+                    <div className="modalCardFace">
+                        <div className='modalCardImgOuter'>
+                            <div className='cardImgOuter'>
+                                <img
+                                    src={`${currentDeck?.images['card-back']}`}
+                                    className="cardImg"
+                                    alt={`Deck back`}
+                                />
+                            </div>
                         </div>
-                        <h3 className="cardTitle">Card Back</h3>
+                        <p className="cardDesc">
+                            Card Back
+                        </p>
                     </div>
                 </div>
                 {groupedCards.map((group) =>
@@ -292,59 +255,26 @@ function DeckPanel({ user, selectedDeck, setSelectedDeck, showAlert, setLoading,
                         <>
                         <h3 className="innerSuitTitle">{group.suit}</h3>
 
-                        <div className="outerDeckCardGrid">
+                        <div className="modalOuterCardsGrid">
                             {group.cards.map((card) => (
-                                <div className={`deckCardOuter ${
-                                    currentDeck?.id === selectedDeck?.id ? 'clickable' : ''
-                                    }`} onClick={
-                                        currentDeck?.id === selectedDeck?.id
-                                            ? () => navigate(`/cards/${card.nameShort}`)
-                                            : undefined
-                                    }>
-                                    <div className='deckCardImgOuter'>
-                                        {currentDeck && (
-                                            <img
-                                                src={`${currentDeck.images['card-front']}/${card.type.replaceAll(" ", "")}/${card.nameShort}.png`}
-                                                className="deckCardImg"
-                                                alt={card.name}
-                                            />
-                                        )}
-                                    </div>
-                                    <h3 className="cardTitle">{card.name}</h3>
-                                </div>
+                                <NoFlipMiniCard selectedDeck={currentDeck} card={card}></NoFlipMiniCard>
                             ))}
                         </div>
                         </>
                     ) : null
                 )}
             </div>
-            <div className="modal" ref={infoModalRef}>
-                <div className="modal-content">
-                    <span className="close" onClick={()=>setInfoModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Info</h2>
-                    <div className='infoModals'>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Welcome to the {currentDeck?.name} Deck Page! 
-                        </p>
-                        {user !== null ? (
-                            <>
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                The default selected deck is the Rider-Waite Deck. You are logged in, click select to equip this deck & theme!
-                            </p> 
-                            </>
-                        ):(
-                            <>
-                            <p className='infoModalPt'>
-                                <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                                The default selected deck is the Rider-Waite Deck. Click select to equip this deck & theme! You're not logged in, so your selection will only last until refresh!
-                            </p> 
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
+            <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
+                <InfoPage 
+                    infoMessages={[
+                        `Welcome to the ${currentDeck?.name} Deck Page!`,
+                        `Click select to equip this deck & theme!`,
+                        ...(user == null 
+                            ? [`You're not logged in, so your selection will only last until refresh!`] 
+                            : []),
+                    ].filter(Boolean)} 
+                />
+            </Modal>
         </>
     )
 }

@@ -6,17 +6,19 @@ import MiniSpread from '../components/MiniSpread'
 import type { User, Deck, Spread} from '../types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import Modal from '../components/Modal'
+import InfoPage from '../components/InfoPage'
 
 interface SpreadsPanelProps {
     user: User | null
     selectedDeck: Deck | null
     setLoading: (loading: boolean) => void
+    CardIcon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 }
 
-function SpreadsPanel({ user, selectedDeck, setLoading }: SpreadsPanelProps) {
+function SpreadsPanel({ user, selectedDeck, setLoading, CardIcon }: SpreadsPanelProps) {
     const [spreads, setSpreads] = useState<Spread[]>([]);
-    const [infoModalOpen, setInfoModalOpen] = useState<boolean>(false);
-    const infoModalRef = useRef<HTMLDivElement | null>(null);
+    const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
     useEffect(() => {
         setLoading(true);
@@ -28,55 +30,28 @@ function SpreadsPanel({ user, selectedDeck, setLoading }: SpreadsPanelProps) {
         })
     }, []);
 
-    useEffect(() => {
-        if(infoModalRef.current === null){
-            return;
-        }
-        if(infoModalOpen === true){
-            infoModalRef.current.style.display = "flex";
-        }else if(infoModalOpen === false){
-            infoModalRef.current.style.display = "none";
-        }
-    }, [infoModalOpen]);
-
     return (
         <>
             <div className='panel'>
                 <div className='panelTitle'>
-                    <button className='infoBtn' onClick={()=>setInfoModalOpen(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
+                    <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
                     <h2>Spreads</h2>
+                    <span className='infoBtn' style={{backgroundColor: "transparent"}}></span>
                 </div>
-                <div className='outerSpreadsGrid'>
+                <div className='outerDeckGrid'>
                     {spreads.map((spread) => (
-                        <MiniSpread user={user} selectedDeck={selectedDeck} spread={spread}></MiniSpread>
+                        <MiniSpread user={user} selectedDeck={selectedDeck} spread={spread} CardIcon={CardIcon}></MiniSpread>
                     ))}
                 </div>
             </div>
-            <div className="modal" ref={infoModalRef}>
-                <div className="modal-content">
-                    <span className="close" onClick={()=>setInfoModalOpen(false)}>&times;</span>
-                    <h2 className='modalPanelTitle'>Info</h2>
-                    <div className='infoModals'>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Welcome to the Spreads Page! 
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            These are the tarot reading spreads available in the readings page. Each spread has a number of pulls, and a concept that aligns with each pull. 
-                            Ex: For the Past, Present, Future spread, there are 3 pulls, one representing past, another representing present, and the last representing future.
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            Click on a spread to see more information in the larger Spread page.
-                        </p>
-                        <p className='infoModalPt'>
-                            <FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon>
-                            This is by no means an exhaustive list, there are plenty of other tarot spreads out there! These are just the easiest and most common ones I've found. 
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
+                <InfoPage infoMessages={[
+                    `Welcome to the Spreads Page! `,
+                    `These are the tarot reading spreads available in the readings page. Each spread has a number of pulls, and a concept that aligns with each pull. Ex: For the Past, Present, Future spread, there are 3 pulls, one representing past, another representing present, and the last representing future.`,
+                    `Click on a spread to see more information in the larger Spread page.`,
+                    `This is by no means an exhaustive list, there are plenty of other tarot spreads out there! These are just the easiest and most common ones I've found. `
+                ]} />
+            </Modal>
         </>
     )
 }

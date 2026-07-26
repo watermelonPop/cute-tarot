@@ -1,0 +1,185 @@
+@media (max-width: 435px) {
+    .header{
+        height: 10vh;
+    }
+    .logo{
+        border-radius: 0.25rem;
+    }
+    .tabContainer{
+        justify-content: space-evenly;
+        border-radius: 0.75rem;
+        height: 80%;
+        width: 95%;
+    }
+    .menuBtn{
+        border-radius: var(--border-radius-small);
+        background-color: var(--accent-background) !important;
+        border-color: var(--accent-text) !important;
+    }
+    .panelBuffer{
+        border-radius: 0.75rem;
+        min-height: 89vh;
+    }
+
+    .panelTitle{
+        justify-content: center;
+    }
+
+    .infoBtn{
+        font-size: 1.75rem;
+        width: 1.7rem;
+        height: 1.7rem;
+    }
+
+    h1{
+        font-size: 2rem;
+    }
+
+    h2{
+        font-size: 1.75rem !important;
+    }
+
+    .cardsSearchDiv{
+        margin-bottom: 0;
+    }
+
+    .panel {
+        row-gap: 0.5rem !important;
+    }
+
+    .suitHeading{
+        margin: 0.5rem;
+    }
+
+    .modalCardImgOuter{
+        padding: 0 !important;
+        width: 90% !important;
+    }
+
+    .cardFace{
+        gap: 0 !important;
+    }
+
+    .modal {
+        padding: 0 !important;
+    }
+
+    .modal-content {
+        width: 95vw !important;
+        height: 98vh !important;
+        border-radius: 0; /* edge-to-edge usually looks better without rounded corners too */
+    }
+
+    .modal-header{
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        width: 95%;
+    }
+
+    .infoModals{
+        gap: 0.5rem !important;
+        padding-top: 0.5rem !important;
+    }
+
+    .deeperPanelHeading{
+        padding-top: 0.5rem !important;
+        padding-bottom: 0rem !important;
+    }
+
+    .backBtn, .mainBtn{
+        padding: 0.5rem;
+    }
+
+    .cardImgInnerBorder{
+        width: 7.5rem !important;
+        padding: 0.75rem !important;
+    }
+
+    .cardDescription, .readingDescription{
+        background-color: transparent !important;
+        padding-top: 0.5rem !important;
+    }
+
+    .cardDescription p, .readingParagraph{
+        color: var(--secondary-text) !important;
+    }
+
+    .outerEditBtn{
+        padding-bottom: 0rem !important;
+    }
+
+    .tableOfContentsOuter{
+        background-color: var(--main-background) !important;
+        color: var(--main-text) !important;
+    }
+
+    .tableContentsTitle{
+        color: var(--main-text) !important;
+    }
+
+    .tableTitleWrapper{
+        border-color: var(--secondary-background) !important;
+    }
+
+    .tableOfContents li, .tocChevron{
+        color: var(--main-text) !important;
+    }
+
+    .tableOfContents{
+        width: 95% !important;
+    }
+
+    .innerCardImgs{
+        column-gap: 0.5rem !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        padding-top: 0rem !important;
+    }
+
+    .cardDescTitle{
+        color: var(--secondary-text) !important;
+        margin-top: 0rem !important;
+    }
+
+    .sectionHeading{
+        border-color: var(--main-background) !important;
+    }
+
+    .outerDeckGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        column-gap: 0.5rem !important;
+    }
+
+    .deckImgOuter{
+        padding: 0.5rem !important;
+        width: 95% !important;
+    }
+
+    .outerCardsGrid {
+        column-gap: 0.5rem !important;
+        row-gap: 0.5rem !important;
+    }
+
+    .deckTitle, .spreadTitle{
+        font-size: 1.25rem !important;
+    }
+
+    .topOuterDeckCardGrid{
+        width: 95% !important;
+        padding-top: 0rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    .modalOuterCardsGrid{
+        column-gap: 0.5rem !important;
+        row-gap: 1rem !important;
+    }
+
+    .cardParagraph{
+        padding-top: 0rem !important;
+    }
+
+    .readingsForm{
+        row-gap: 0.75rem !important;
+    }
+}
