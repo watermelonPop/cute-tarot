@@ -38,6 +38,7 @@ router.get(
 
       const reading = await prisma.reading.findUnique({
         where: { id },
+        include: { annotations: true },
       });
 
       if (!reading) {
@@ -63,15 +64,20 @@ router.post(
         reversals?: boolean | string;
         topic?: string;
         name?: string;
+        deckId?: string;
       };
 
-      const { spreadId, topic, name } = body;
+      const { spreadId, topic, name, deckId } = body;
       let { reversals } = body;
 
       const userId = req.dbUser!.id; // ✅ comes from verified token
 
       if (!spreadId) {
         return res.status(400).json({ error: 'Spread ID is required' });
+      }
+
+      if (!deckId) {
+        return res.status(400).json({ error: 'Deck ID is required' });
       }
 
       // Convert reversals string to boolean if necessary
@@ -142,7 +148,9 @@ router.post(
           cards: drawnCards,
           reversalValues: finalReversals,
           relations: relationIds,
+          deckId,
         },
+        include: { annotations: true },
       });
 
       // Push reading to authenticated user
@@ -176,6 +184,7 @@ router.post(
       const updated = await prisma.reading.update({
         where: { id },
         data: { notes },
+        include: { annotations: true },
       });
 
       return res.status(200).json(updated);
@@ -200,6 +209,7 @@ router.post(
         topic?: string;
         cardIds?: string[];
         reversalValues?: boolean[];
+        deckId?: string;
       };
 
       const {
@@ -207,6 +217,7 @@ router.post(
         topic,
         cardIds,
         reversalValues,
+        deckId,
       } = body;
 
       let { reversals, name, date } = body;
@@ -227,6 +238,10 @@ router.post(
 
       if (!spreadId) {
         return res.status(400).json({ error: 'Spread ID is required' });
+      }
+
+      if (!deckId) {
+        return res.status(400).json({ error: 'Deck ID is required' });
       }
 
       if (!cardIds || cardIds.length === 0) {
@@ -292,7 +307,9 @@ router.post(
           cards: cardIds,
           reversalValues: reversalValues ?? [],
           relations: relationIds,
+          deckId,
         },
+        include: { annotations: true },
       });
 
       // Attach reading to authenticated user
@@ -304,6 +321,119 @@ router.post(
       res.status(201).json(reading);
     } catch (err) {
       console.error('POST /api/readings failed:', err);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
+// POST /api/readings/:id/annotations
+router.post(
+  '/:id/annotations', 
+  verifyJWT,
+  requireReadingOwnership("id"),
+  async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id: annotationId, targetId, startOffset, endOffset, text, hideMode, highlightColor, note, createdAt } = req.body;
+
+    if (!targetId || startOffset == null || endOffset == null || typeof text !== 'string') {
+      return res.status(400).json({ error: 'Missing required annotation fields' });
+    }
+
+    await prisma.annotation.create({
+      data: {
+        id: annotationId,
+        readingId: id,
+        targetId,
+        startOffset,
+        endOffset,
+        text,
+        hideMode,
+        highlightColor: highlightColor ?? null,
+        note: note ?? null,
+        createdAt: createdAt ? new Date(createdAt) : undefined,
+      },
+    });
+
+    const updatedReading = await prisma.reading.findUnique({
+      where: { id },
+      include: { annotations: true },
+    });
+
+    res.json(updatedReading);
+  } catch (err) {
+    console.error('POST /api/readings/:id/annotations failed:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/readings/:id/annotations/:annotationId
+router.patch(
+  '/:id/annotations/:annotationId',
+  verifyJWT,
+  requireReadingOwnership("id"),
+  async (req, res) => {
+    try {
+      const { id, annotationId } = req.params as { id: string; annotationId: string };
+      const { targetId, startOffset, endOffset, text, hideMode, highlightColor, note } = req.body;
+
+      const existing = await prisma.annotation.findUnique({ where: { id: annotationId } });
+
+      if (!existing || existing.readingId !== id) {
+        return res.status(404).json({ error: 'Annotation not found' });
+      }
+
+      await prisma.annotation.update({
+        where: { id: annotationId },
+        data: { 
+          targetId, 
+          startOffset, 
+          endOffset, 
+          text, 
+          hideMode, 
+          highlightColor: highlightColor ?? null, 
+          note: note ?? null,
+        },
+      });
+
+      const updatedReading = await prisma.reading.findUnique({
+        where: { id },
+        include: { annotations: true },
+      });
+
+      res.json(updatedReading);
+    } catch (err) {
+      console.error(`PATCH /api/readings/${req.params.id}/annotations/${req.params.annotationId} failed:`, err);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
+// DELETE /api/readings/:id/annotations/:annotationId
+router.delete(
+  '/:id/annotations/:annotationId',
+  verifyJWT,
+  requireReadingOwnership("id"),
+  async (req, res) => {
+    try {
+      const { id, annotationId } = req.params as { id: string; annotationId: string };
+
+      const existing = await prisma.annotation.findUnique({ where: { id: annotationId } });
+
+      if (!existing || existing.readingId !== id) {
+        return res.status(404).json({ error: 'Annotation not found' });
+      }
+
+      await prisma.annotation.delete({ where: { id: annotationId } });
+
+      const updatedReading = await prisma.reading.findUnique({
+        where: { id },
+        include: { annotations: true },
+      });
+
+      res.json(updatedReading);
+    } catch (err) {
+      console.error(`DELETE /api/readings/${req.params.id}/annotations/${req.params.annotationId} failed:`, err);
       res.status(500).json({ error: 'Internal server error' });
     }
   }

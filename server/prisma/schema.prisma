@@ -41,11 +41,11 @@ model Card {
 }
 
 model Deck {
-  id          String @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
-  description String @default("")
+  description String    @default("")
   images      Json //dictionary of strings, keys are the card id, and value is the image path for that card and that deck
-  style       Json // dictionary of css vars
+  readings    Reading[]
 }
 
 model Relation {
@@ -58,16 +58,19 @@ model Relation {
 }
 
 model Reading {
-  id             String     @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
-  date           DateTime   @default(now())
-  cards          String[]    //list of card ids pulled in the reading in order of pull
-  reversalValues Boolean[]  @default([])
-  spread         String     // spread id
-  relations      String[]   @default([])//list of relation ids for the card combos in the cards list
+  date           DateTime     @default(now())
+  cards          String[]      //list of card ids pulled in the reading in order of pull
+  reversalValues Boolean[]    @default([])
+  spread         String       // spread id
+  relations      String[]     @default([])//list of relation ids for the card combos in the cards list
   reversals      Boolean
   topic          String
-  notes          String     @default("")
+  notes          String       @default("")
+  annotations    Annotation[]
+  deckId         String       // deck equipped at creation time; card descriptions/images always resolve against this deck, not whatever deck the viewer currently has equipped
+  deck           Deck         @relation(fields: [deckId], references: [id])
 }
 
 model Spread {
@@ -76,4 +79,26 @@ model Spread {
   description String
   pulls       String[]
   numPulls    Int
+}
+
+enum HideMode {
+  none
+  strikethrough
+  hidden
+}
+
+model Annotation {
+  id             String   @id @default(uuid())
+  readingId      String
+  reading        Reading  @relation(fields: [readingId], references: [id], onDelete: Cascade)
+  targetId       String   // e.g. "cardDesc0", "relationDesc2" — matches the DOM id scheme
+  startOffset    Int
+  endOffset      Int
+  text           String   // snapshot of selected text, used to validate/re-anchor offsets
+  hideMode       HideMode @default(none)
+  highlightColor String?
+  note           String?
+  createdAt      DateTime @default(now()) // tie-breaker order for overlapping annotations
+
+  @@index([readingId, targetId])
 }

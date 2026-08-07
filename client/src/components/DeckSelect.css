@@ -1,0 +1,48 @@
+/* Mirrors a native file-input's look: current value on the left, a
+   distinct "browse"-style action button on the far right. */
+.deckSelectInput {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background-color: var(--accent-background);
+    border-radius: var(--border-radius-small);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.deckSelectValue {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: 0.5rem;
+    color: var(--accent-text);
+    font-family: "Literata", serif;
+    font-size: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.deckSelectBtn {
+    flex: 0 0 auto;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    background-color: var(--secondary-background);
+    color: var(--secondary-text);
+    border: none;
+    font-family: "Literata", serif;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    height: 95%;
+    margin-right: 0.25rem;
+    border-radius: var(--border-radius-small);
+}
+
+.deckSelectBtn:hover {
+    background-color: var(--main-background);
+    color: var(--accent-background);
+}

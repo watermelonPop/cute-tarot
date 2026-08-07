@@ -99,7 +99,7 @@ router.post(
   async (req, res) => {
   const { deckId } = req.params;
   try {
-    const { description, style } = req.body;
+    const { description } = req.body;
 
     const deck = await prisma.deck.findUnique({
       where: { id: deckId },
@@ -111,9 +111,8 @@ router.post(
 
     const updatedDeck = await prisma.deck.update({
       where: { id: deckId },
-      data: { 
-        description, 
-        style
+      data: {
+        description,
       },
     });
 

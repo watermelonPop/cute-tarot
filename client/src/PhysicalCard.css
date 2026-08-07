@@ -1,7 +1,7 @@
 
 
 .physCardOuter{
-    background-color: var(--main-background);
+    background-color: var(--secondary-background) !important;
     position: fixed;       /* Stays fixed relative to the viewport */
     top: 0;                /* Start at the top */
     left: 0;               /* Start at the left */
@@ -9,6 +9,10 @@
     height: 100vh;         /* Full viewport height */
     z-index: 50;
     overflow-y: scroll;
+}
+
+.physCardOuter h2{
+    color: var(--secondary-text);
 }
 
 .physImgsOuter{
@@ -19,7 +23,7 @@
 }
 
 .physImgOuter{
-    background-color: var(--secondary-background);
+    background-color: var(--accent-background) !important;
     display: flex;
     justify-content: center;
     align-items: center;

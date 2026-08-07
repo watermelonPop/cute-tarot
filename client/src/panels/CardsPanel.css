@@ -2,9 +2,9 @@
   display: grid;
   grid-template-columns: repeat(
     auto-fill,
-    minmax(min(200px, calc((100% - 2 * 16px) / 3)), 1fr)
+    minmax(min(200px, calc((100% - 1 * 16px) / 2)), 1fr)
   );
-  gap: 16px;
+  gap: 0.75rem;
 
   width: 95%;
   margin: 0 auto;
@@ -70,6 +70,9 @@
   align-items: center;
   gap: 0.5rem;
   /* no height set — sizes itself to its content (image + optional checkbox) */
+
+  container-type: inline-size; /* enables cqw units based on THIS element's width, e.g. for .spreadCardBackText */
+  container-name: card;
 }
 
 .cardImageAspectWrapper {
@@ -111,7 +114,6 @@
   border-radius: var(--border-radius-small);
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
-
 
 .cardParagraph{
   line-height: 2;
@@ -338,7 +340,7 @@
 .subHeading{
     width: 100%;
     text-align: center;
-    color: var(--secondary-text);
+    color: var(--accent-text);
     opacity: 0.85;
     text-shadow: none;
     font-size: 1rem;

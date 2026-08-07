@@ -1,0 +1,89 @@
+.annotationToolbarItem {
+  /* No longer a positioning context on purpose: removing position:relative
+     lets the submenu's containing block resolve up to .annotationToolbar
+     itself (position:fixed), so top:50%/left:100% below center and place
+     the submenu against the whole toolbar rather than this one button. */
+  position: static;
+}
+
+/* Both the highlight-swatch submenu and the note-form submenu share this
+   class. Center them vertically on the entire toolbar and place them just
+   outside its right edge, with a 1rem gap. */
+.annotationToolbarItem .annotationSubmenu {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  margin-left: 0.5rem;
+  z-index: 1;
+}
+
+/* CSS bridge: an invisible strip spanning the gap between the toolbar and
+   the submenu. It's a child of the submenu, so it's still a descendant of
+   .annotationToolbarItem — hovering across it keeps the mouse "inside" the
+   item for the mouseenter/mouseleave handlers, instead of the cursor
+   crossing dead space and closing the submenu before it arrives. */
+.annotationToolbarItem .annotationSubmenu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -1rem;
+  width: 1rem;
+  height: 100%;
+}
+
+/* Flipped placement (see AnnotationToolbar.tsx's decideAlign) for a
+   selection near the right edge of the viewport, where the default
+   right-opening submenu would run off-screen — opens on the toolbar's left
+   instead. The bridge strip moves to the opposite side to match, since the
+   gap it needs to cover is now between the submenu and the toolbar on the
+   right, not the left. */
+.annotationToolbarItem .annotationSubmenu.alignLeft {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+.annotationToolbarItem .annotationSubmenu.alignLeft::before {
+  left: auto;
+  right: -1rem;
+}
+
+/* Note submenu: textarea + Cancel/Save */
+.annotationNoteSubmenu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  width: 220px;
+}
+
+.annotationNoteTextarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  font: inherit;
+  padding: 0.4rem;
+  box-sizing: border-box;
+}
+
+.annotationNoteSubmenuActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.annotationNoteCancelBtn,
+.annotationNoteSaveBtn {
+  padding: 0.5rem;
+  border-radius: var(--border-radius-small);
+  font-family: "Literata", serif;
+  outline: none;
+  border: 2px solid transparent;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+    background-color: var(--secondary-text);
+  color: var(--accent-background);
+}

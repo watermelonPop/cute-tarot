@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import '../App.css'
 import './panel.css'
 import type { User, Deck, Card } from '../types'
+import { getDeckTheme } from '../types'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
@@ -11,7 +13,7 @@ import TableOfContents from '../components/TableOfContents';
 import Modal from '../components/Modal';
 import InfoPage from '../components/InfoPage';
 
-function buildCardToc(card: Card): TocItem[] {
+export function buildCardToc(card: Card): TocItem[] {
     if(!card){
         return [];
     }
@@ -59,13 +61,14 @@ function buildCardToc(card: Card): TocItem[] {
 interface CardPanelProps {
     user: User | null
     selectedDeck: Deck | null
+    cards: Card[]
+    setCards: Dispatch<SetStateAction<Card[]>>
     showAlert: (msg: string) => void
-    setLoading: (loading: boolean) => void
     token: string | null
 }
 
-function CardPanel({ user, selectedDeck, showAlert, setLoading, token}: CardPanelProps){
-    const [cards, setCards] = useState<Card[]>([])
+function CardPanel({ user, selectedDeck, cards, setCards, showAlert, token}: CardPanelProps){
+    const theme = getDeckTheme(selectedDeck?.name)
     const { nameShort } = useParams()
     const navigate = useNavigate();
     const [adminEditing, setAdminEditing] = useState<boolean>(false);
@@ -73,22 +76,6 @@ function CardPanel({ user, selectedDeck, showAlert, setLoading, token}: CardPane
     const [editableCard, setEditableCard] = useState<Card | null>(null);
     const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
     const [showInspectModal, setShowInspectModal] = useState<boolean>(false);
-
-    // Load all cards
-    useEffect(() => {
-        setLoading(true);
-        fetch('/api/cards')
-        .then(res => res.json())
-        .then((data: Card[]) => {
-            setCards(data);
-            setLoading(false);
-        })
-        .catch(err => {
-            console.error('Failed to fetch cards:', err);
-            setLoading(false);
-        })
-    }, [])
-
 
     // Find the card based on the URL param
     const currentCard = nameShort ? cards.find(c => c.nameShort === nameShort) : null;
@@ -359,12 +346,13 @@ function CardPanel({ user, selectedDeck, showAlert, setLoading, token}: CardPane
             <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
                 <InfoPage infoMessages={[
                     `Welcome to the Card page for ${currentCard?.name}!`,
-                    `This page shows the back and front side of ${currentCard?.name} for the selected deck, as well as detailed information including the keywords, description, and various meanings.`,
-                    `Click the inspect button to view a draggable 3d version of the card.`,
-                    `Click the Search Relations button to go to the relations generator with ${currentCard?.name} already selected.`,
-                    user !== null ? 
-                        `The default selected deck is the Rider-Waite Deck. You are logged in, go to the decks page to select a different deck for your account!` :
-                        `The default selected deck is the Rider-Waite Deck. Go to the decks page to select and browse using a different deck. You're logged out, so this selection only lasts until you refresh!`
+                    `This page shows ${currentCard?.name}'s front and back for your selected deck, along with its keywords, description, and meanings.`,
+                    `Click Inspect to view a draggable 3D version of the card.`,
+                    `Click Search Relations to open the relations generator with ${currentCard?.name} already selected.`,
+                    `The default deck is the Rider-Waite Deck. Visit the Decks page to choose another.`,
+                    user === null
+                        ? `You're not logged in, so your deck selection will reset on refresh.`
+                        : `You're logged in, so any deck you select is saved automatically to your account.`
                 ]} />
             </Modal>
             {showInspectModal && (
@@ -379,8 +367,8 @@ function CardPanel({ user, selectedDeck, showAlert, setLoading, token}: CardPane
                     />
                     </div>
                     <button className='backBtn' onClick={() => setShowInspectModal(false)} style={{
-                        backgroundColor: selectedDeck?.style['accent-background'],
-                        color: selectedDeck?.style['accent-text']
+                        backgroundColor: theme['accent-background'],
+                        color: theme['accent-text']
                     }}>Close</button>
                 </div>
             )}

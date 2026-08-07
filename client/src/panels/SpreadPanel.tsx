@@ -4,10 +4,6 @@ import './panel.css'
 import './SpreadsPanel.css'
 import type { User, Spread} from '../types'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import Modal from '../components/Modal'
-import InfoPage from '../components/InfoPage'
 
 interface SpreadPanelProps {
     user: User | null
@@ -24,7 +20,6 @@ function SpreadPanel({user, showAlert, setLoading, token, Icon }: SpreadPanelPro
     const [adminEditing, setAdminEditing] = useState<boolean>(false);
     
     const [editableSpread, setEditableSpread] = useState<Spread | null>(null);
-    const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
     useEffect(() => {
         setLoading(true);
@@ -102,7 +97,7 @@ function SpreadPanel({user, showAlert, setLoading, token, Icon }: SpreadPanelPro
                         Back
                     </button>
                     <h2 className='deeperPanelTitle'>{currentSpread?.name}</h2>
-                    <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
+                    <span className="infoBtn" style={{ backgroundColor: 'transparent' }} />
                     {user?.type === "Admin" && (
                         adminEditing === true ? (
                             <button className='deckHeadingBtn' onClick={()=>setAdminEditing(false)}>
@@ -122,8 +117,10 @@ function SpreadPanel({user, showAlert, setLoading, token, Icon }: SpreadPanelPro
                                 <div className="cardBackOverlayWrapper">
                                     <div className="innerCardImg cardAspect"></div>
                                     <div className="cardBackTextWrapper">
-                                        <Icon className="cardBackLogo"/>
-                                        <div className="cardBackText">
+                                        <div className="cardBackLogoShadowWrap">
+                                            <Icon className="cardBackLogo"/>
+                                        </div>
+                                        <div className="spreadCardBackText">
                                             {currentSpread?.pulls[i]}
                                         </div>
                                     </div>
@@ -156,12 +153,6 @@ function SpreadPanel({user, showAlert, setLoading, token, Icon }: SpreadPanelPro
                     )}
                 </div>
             </div>
-            <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
-                <InfoPage infoMessages={[
-                    `Welcome to the ${currentSpread?.name} Spread Page!`,
-                    `Each spread has a number of pulls, and a concept that aligns with each pull. Ex: For the Past, Present, Future spread, there are 3 pulls, one representing past, another representing present, and the last representing future.`,
-                ]} />
-            </Modal>
         </>
     )
 }

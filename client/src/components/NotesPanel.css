@@ -1,0 +1,141 @@
+.readingPanelRow {
+  position: relative;
+}
+
+.readingMainColumn {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Reserve room for the panel only when it's actually showing, so the
+   reading text doesn't leave a gap on notes-free readings. */
+.readingMainColumn.withNotesPanel {
+  margin-right: 300px; /* notesPanel width (280px) + gap (20px) */
+}
+
+/* Side panel: absolutely positioned within cardDescription so each card's
+   top offset (computed relative to that same ancestor) lines up with its
+   annotated passage as the whole page scrolls. */
+.notesPanel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30%;
+}
+
+/* Stays pinned near the top of the viewport while the page scrolls, rather
+   than scrolling away with the first card. */
+.notesPanelTitle {
+  position: sticky;
+  top: 1rem;
+  margin: 0 0 0.75rem;
+  background: inherit;
+}
+
+/* Cards are positioned absolutely by NotesPanel via inline `top`, so this
+   just needs to be the positioning context for them. */
+.notesPanelCards {
+  position: relative;
+}
+
+/* Note card */
+.noteCard {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: var(--accent-background);
+  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+  cursor: pointer;
+}
+
+.noteCard.focused {
+  border-color: #ccc;
+  box-shadow: 0 0 0 2px var(--secondary-text), 0 8px 20px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px) scale(1.015);
+}
+
+.noteCardQuote {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0 0 0.5rem;
+  background: none;
+
+  border: 2px solid transparent;
+  border-left: 0.5rem solid #ccc;
+  border-radius: var(--border-radius-small);
+
+  text-align: left;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--main-text);
+  cursor: pointer;
+  background-color: var(--main-background);
+  box-sizing: border-box;
+}
+
+.noteCardBody {
+  margin: 0;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--accent-text) !important;
+}
+
+.noteCardActions {
+  position: absolute;
+  top: -1rem;
+  right: -1rem;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.noteCardActionBtn { 
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+    width: 2.5rem;
+  height: 2.5rem;
+
+  background-color: var(--secondary-background);
+  color: var(--accent-background);
+  border-radius: 50%;
+}
+
+.noteCardActionBtn:hover {
+  opacity: 1;
+}
+
+
+.noteCardBodyEdit {
+  width: 100%;
+  min-height: 4rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--secondary-text);
+  background: var(--secondary-background);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: var(--border-radius-small);
+  padding: 0.5rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.noteCardEditBtn {
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
+}
+
+.noteCard:hover .noteCardEditBtn {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}

@@ -102,16 +102,16 @@
 }
 
 .accountLoginBtn{
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    font-family: "Literata", serif;
-    outline: none;
-    border: 2px solid transparent;
-    font-size: 1rem;
-    font-weight: 700;
-    background-color: var(--accent-text);
-    color: var(--accent-background);
-    cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  font-family: "Literata", serif;
+  outline: none;
+  border: 2px solid transparent;
+  font-size: 1rem;
+  font-weight: 700;
+  background-color: var(--accent-text);
+  color: var(--accent-background);
+  cursor: pointer;
 }
 
 .editReadingsBtn{

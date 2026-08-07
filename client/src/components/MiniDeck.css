@@ -14,6 +14,18 @@
   margin-bottom: 1rem;
 }
 
+/* Wraps MiniDeck's DeckTile purely so mobile CSS can target its checkmark
+   specifically (see .miniDeckTile .deckCheckmark in MobileApp.css) without
+   also affecting the pickers that share DeckTile. display:contents removes
+   it from box generation entirely, so .deckOuter is still the true grid
+   item — otherwise this wrapper (not .deckOuter) would be what grid's
+   default stretch equalizes to the row height, and .deckOuter itself
+   (having no height:100%) would revert to its own natural content height,
+   breaking the equal-height-cards-per-row layout the grid relies on. */
+.miniDeckTile {
+  display: contents;
+}
+
 .deckOuter{
     width: 100%;
     background-color: var(--accent-background);
@@ -50,8 +62,8 @@
   top: -0.75rem;
   right: -0.75rem;
 
-  width: 3rem;
-  height: 3rem;
+  width: 2.75rem;
+  height: 2.75rem;
 
   background-color: var(--main-background);
   color: var(--accent-background);
@@ -118,6 +130,7 @@
   flex-shrink: 0;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
+  color: var(--accent-text);
 }
 .deckDesc{
     margin: 0;
@@ -149,8 +162,8 @@
   top: -0.75rem;
   right: -0.75rem;
 
-  width: 3rem;
-  height: 3rem;
+  width: 2.75rem;
+  height: 2.75rem;
 
   background-color: var(--accent-background);
   border: 2px solid var(--main-background);
@@ -177,7 +190,9 @@
   transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
 }
 
-.deckOuter:hover .deckCheckmark{
+.deckOuter:hover .deckCheckmark,
+.spreadOuter:hover .deckCheckmark,
+.modalCardFace:hover .deckCheckmark{
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
@@ -203,4 +218,28 @@
 
 .deckCheckmark:active{
   transform: scale(0.95);
+}
+
+/* Forces the same "hovered, about to be picked" look as :hover, driven by a
+   class instead of the pointer. Used only in SelectDeckPage/SelectSpreadPage/
+   SelectCardPage during the brief pre-commit delay after a click anywhere on
+   the tile, so it plays the same reveal animation as hovering onto and
+   clicking the button directly, instead of abruptly jumping to the final
+   selected state. */
+.deckOuter .deckCheckmark.confirming,
+.spreadOuter .deckCheckmark.confirming,
+.modalCardFace .deckCheckmark.confirming{
+  opacity: 1;
+  transform: scale(1.1);
+  background-color: var(--main-background);
+  color: var(--accent-background);
+  border-color: var(--accent-background);
+  pointer-events: none;
+}
+
+.deckOuter .deckCheckmark.confirming .deckCheckmarkIcon,
+.spreadOuter .deckCheckmark.confirming .deckCheckmarkIcon,
+.modalCardFace .deckCheckmark.confirming .deckCheckmarkIcon{
+  opacity: 1;
+  transform: scale(1);
 }

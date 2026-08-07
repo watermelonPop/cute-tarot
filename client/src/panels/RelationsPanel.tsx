@@ -42,17 +42,16 @@ function buildRelationToc(relation: Relation | null): TocItem[] {
 interface RelationsPanelProps {
     user: User | null
     selectedDeck: Deck | null
+    cards: Card[]
     showAlert: (msg: string) => void
-    setLoading: (loading: boolean) => void
     token: string | null
     Icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
 }
 
 
-function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon}: RelationsPanelProps) {
+function RelationsPanel({ user, selectedDeck, cards, showAlert, token, Icon}: RelationsPanelProps) {
     const [firstCard, setFirstCard] = useState<Card | null>(null);
     const [secondCard, setSecondCard] = useState<Card | null>(null);
-    const [cards, setCards] = useState<Card[]>([])
     const [showDescription, setShowDescription] = useState(false);
     const [currentRelation, setCurrentRelation] = useState<Relation | null>(null);
     const [isAnimating, setIsAnimating] = useState(false)
@@ -85,22 +84,41 @@ function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon
         setSecondCard(card2);
     }, [cards, nameShort1, nameShort2]);
 
-    useEffect(() => {
-        if (cards.length === 0) return;
-
+    // Writes a card selection into the URL. Deliberately called directly
+    // from the two places the user actually picks a card (below), rather
+    // than from an effect reacting to firstCard/secondCard changes — that
+    // state also changes when the effect above hydrates it FROM the URL on
+    // mount, and there's no reliable way to tell the two cases apart from
+    // inside a passive effect (React StrictMode's double-invoke of effects
+    // on mount makes a one-shot "skip on mount" guard unreliable here: the
+    // guard is consumed by the first invocation, so the second invocation
+    // — still reading the pre-update null/null closure, since no real
+    // render happens between the two synthetic invocations — fires the
+    // premature navigate anyway).
+    const navigateToCardSelection = (card1: Card | null, card2: Card | null) => {
         let path = '/relations';
-        if (firstCard && secondCard) {
-            path = `/relations/${firstCard.nameShort}/${secondCard.nameShort}`;
-        } else if (firstCard) {
-            path = `/relations/${firstCard.nameShort}`;
-        } else if (secondCard) {
-            path = `/relations/none/${secondCard.nameShort}`;
+        if (card1 && card2) {
+            path = `/relations/${card1.nameShort}/${card2.nameShort}`;
+        } else if (card1) {
+            path = `/relations/${card1.nameShort}`;
+        } else if (card2) {
+            path = `/relations/none/${card2.nameShort}`;
         }
 
         if (location.pathname !== path) {
             navigate(path, { replace: true });
         }
-    }, [firstCard, secondCard]);
+    };
+
+    const handleSelectFirstCard = (card: Card | null) => {
+        setFirstCard(card);
+        navigateToCardSelection(card, secondCard);
+    };
+
+    const handleSelectSecondCard = (card: Card | null) => {
+        setSecondCard(card);
+        navigateToCardSelection(firstCard, card);
+    };
 
 
     useEffect(() => {
@@ -111,16 +129,6 @@ function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon
         setShowDescription(false);
         setCurrentRelation(null); // optional, forces new fetch if needed
     }, [firstCard, secondCard]);
-
-    useEffect(() => {
-        setLoading(true);
-        fetch('/api/cards')
-        .then(res => res.json())
-        .then(data => {
-            setCards(data);
-            setLoading(false);
-        })
-    }, []);
 
     useEffect(() => {
 
@@ -354,32 +362,31 @@ function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon
                     <SelectCardPage
                         showModal={showCardSelectModal.show}
                         groupedCards={groupedCards}
-                        setCard={setFirstCard}
+                        setCard={handleSelectFirstCard}
                         selectedDeck={selectedDeck!}
+                        selectedCard={firstCard}
                     />
                 ):(
                     <SelectCardPage
                         showModal={showCardSelectModal.show}
                         groupedCards={groupedCards}
-                        setCard={setSecondCard}
+                        setCard={handleSelectSecondCard}
                         selectedDeck={selectedDeck!}
+                        selectedCard={secondCard}
                     />
                 )}
             </Modal>
             <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
                 <InfoPage infoMessages={[
-                    `Welcome to the Card Relations page! `,
-                    `This is a mix and match type generator. Select any 2 different cards in the tarot deck, and see how they relate!`,
-                    `Accurate readings of a combination will always depend on the querent's question and the other surrounding cards. These combinations show just some of the possible interpretations. Treat this as an educational tool!`,
-                    `All card combinations have a description, but some have multiple descriptions for different subject matter.`,
-                    `When a card slot is clicked, a selection window will appear where the card options are displayed in order by suit. Just click to select!`,
-                    user !== null ? (
-                        `This page uses cards from the selected deck. 
-                        The default selected deck is the Rider-Waite Deck. You are logged in, go to the decks page to select a different deck!`
-                    ):(
-                        `This page uses cards from the selected deck. 
-                        You are not logged in, so the selected deck will be the Rider-Waite Deck. Log in to select a different deck.`
-                    )
+                    `Welcome to the Card Relations page!`,
+                    `This is a mix-and-match generator. Select any 2 different cards to see how they relate.`,
+                    `A combination's true meaning always depends on the querent's question and the surrounding cards. Treat these as an educational tool, not a definitive reading.`,
+                    `Every combination has a description, and some have multiple descriptions for different subject matter.`,
+                    `Click a card slot to open a selection window with all cards listed by suit.`,
+                    `This page uses cards from your selected deck. The default is the Rider-Waite Deck.`,
+                    user === null
+                        ? `You're not logged in, so you'll need to log in to select a different deck.`
+                        : `You're logged in, so go to the Decks page to select a different deck.`
                 ]} />
             </Modal>
             </>
@@ -395,7 +402,7 @@ function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon
                         {currentRelation?.descriptionAdvice ? (
                             <>
                             <h3 id="relationAdviceSection" className="sectionHeading">Advice</h3>
-                            <p>{currentRelation?.descriptionAdvice}</p>
+                            <p className='relationParagraph'>{currentRelation?.descriptionAdvice}</p>
                             </>
                         ):(
                             <div></div>
@@ -403,7 +410,7 @@ function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon
                         {currentRelation?.descriptionLove ? (
                             <>
                             <h3 id="relationLoveSection" className="sectionHeading">Love and Relationships</h3>
-                            <p>{currentRelation?.descriptionLove}</p>
+                            <p className='relationParagraph'>{currentRelation?.descriptionLove}</p>
                             </>
                         ):(
                             <div></div>
@@ -411,7 +418,7 @@ function RelationsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon
                         {currentRelation?.descriptionCareer ? (
                             <>
                             <h3 id="relationCareerSection" className="sectionHeading">Career</h3>
-                            <p>{currentRelation?.descriptionCareer}</p>
+                            <p className='relationParagraph'>{currentRelation?.descriptionCareer}</p>
                             </>
                         ):(
                             <div></div>

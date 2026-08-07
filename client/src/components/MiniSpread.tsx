@@ -1,5 +1,6 @@
 import type { Spread } from '../types'
 import { useNavigate } from 'react-router-dom'
+import SpreadTile from './SpreadTile'
 
 interface MiniSpreadProps {
     spread: Spread
@@ -9,26 +10,13 @@ interface MiniSpreadProps {
 function MiniSpread({ spread, CardIcon }: MiniSpreadProps) {
     const navigate = useNavigate();
 
-  return (
-    <>
-    <div
-        className="spreadOuter"
-        onClick={() => {
-            navigate(`/spreads/${spread.id}`)
-        }}
-        >
-        <div className='spreadImgOuter'>
-            {Array.from({ length: spread.numPulls }).map((_) => (
-                <div className='spreadImgBorder'>
-                    <CardIcon className="spreadImg"/>
-                </div>
-            ))}
-        </div>
-        <h2 className="spreadTitle"><span className="spreadTitleClamp">{spread.name}</span></h2>
-        <p className='spreadDesc'>{spread.description}</p>
-      </div>
-    </>
-  )
+    return (
+        <SpreadTile
+            spread={spread}
+            CardIcon={CardIcon}
+            onClick={() => navigate(`/spreads/${spread.id}`)}
+        />
+    )
 }
 
 export default MiniSpread

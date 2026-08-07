@@ -1,0 +1,72 @@
+.miniModalPrompt {
+  margin: 0;
+
+  color: var(--secondary-text);
+  font-size: 1.25rem;
+  text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mini-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  justify-content: center;
+  align-items: center;
+
+  padding: 2rem;
+  box-sizing: border-box;
+
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+}
+
+/* Note Modal Content/Box — same shape/sizing as ConfirmModal */
+.mini-modal-content {
+  width: min(90vw, 380px);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  background: var(--secondary-background);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+
+  box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+}
+
+.mini-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-bottom: 2px solid var(--main-background);
+
+  flex-shrink: 0;
+  padding: 0.75rem;
+  width: 95%;
+  box-sizing: border-box;
+}
+
+.mini-modal-body {
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0rem;
+}
+
+.mini-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem;
+}

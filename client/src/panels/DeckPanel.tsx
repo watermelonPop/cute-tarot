@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import '../App.css'
 import './panel.css'
 import './DeckPanel.css'
 import type { User, Deck, Card, Suit } from '../types'
+import { getDeckTheme } from '../types'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { Block } from '@uiw/react-color';
 import NoFlipMiniCard from '../components/NoFlipMiniCard'
 import RiderWaiteIcon from '../assets/images/Rider-Waite/card-icon.svg?react'
 import BunnyWaiteIcon from '../assets/images/Bunny-Waite/card-icon.svg?react'
@@ -16,16 +17,16 @@ import InfoPage from '../components/InfoPage'
 interface DeckPanelProps {
   user: User | null
   selectedDeck: Deck | null
+  decks: Deck[]
+  setDecks: Dispatch<SetStateAction<Deck[] | undefined>>
+  cards: Card[]
   setUserSelectedDeck: (deckId: string) => void
   showAlert: (msg: string) => void
-  setLoading: (loading: boolean) => void
     token: string | null
     isMobile: () => boolean
 }
 
-function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoading, token, isMobile }: DeckPanelProps) {
-    const [cards, setCards] = useState<Card[]>([])
-    const [decks, setDecks] = useState<Deck[]>([])
+function DeckPanel({ user, selectedDeck, decks, setDecks, cards, setUserSelectedDeck, showAlert, token, isMobile }: DeckPanelProps) {
     const { deckName } = useParams()
     const navigate = useNavigate()
     const [adminEditing, setAdminEditing] = useState<boolean>(false);
@@ -33,33 +34,10 @@ function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoad
     const [editableDeck, setEditableDeck] = useState<Deck | null>(null);
     const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
-
-    useEffect(() => {
-        setLoading(true);
-        fetch('/api/decks')
-            .then(res => res.json())
-            .then((data: Deck[]) => {
-                setDecks(data);
-                fetch('/api/cards')
-                .then(res => res.json())
-                .then((data: Card[]) => {
-                    setCards(data);
-                    setLoading(false);
-                })
-                .catch(err => {
-                    console.error('Failed to fetch cards:', err);
-                    setLoading(false);
-                })
-            })
-            .catch(err => {
-                console.error('Failed to fetch decks:', err);
-                setLoading(false);
-            });
-    }, []);
-
     const currentDeck = deckName ? decks.find(c => c.name === deckName) : null
+    const theme = getDeckTheme(currentDeck?.name)
 
-    const SelectedIcon = 
+    const SelectedIcon =
         currentDeck?.name?.replace(/[–—]/g, "-") === "Bunny-Waite"
         ? BunnyWaiteIcon
         : RiderWaiteIcon;
@@ -86,9 +64,8 @@ function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoad
             const res = await fetch(`/api/decks/${currentDeck?.id}/updateDeck`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     description: editableDeck?.description,
-                    style: editableDeck?.style
                 }),
             });
 
@@ -101,9 +78,9 @@ function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoad
             // Updated card returned from server
             const updatedDeck: Deck = await res.json();
 
-            // Update local state
+            // Update the shared App-level deck list
             setDecks(prev =>
-                prev.map(deck =>
+                (prev ?? []).map(deck =>
                     deck.id === updatedDeck.id ? updatedDeck : deck
                 )
             );
@@ -144,17 +121,22 @@ function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoad
         <>
             <div className='panel'>
                 <div className='deeperPanelHeading'>
-                    <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>
+                    {!isMobile() && <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>}
                     <button className='backBtn' onClick={() => navigate('/decks')}>
                         Back
                     </button>
                     <h2 className='deeperPanelTitle'>{currentDeck?.name} {!isMobile() && "Deck"}</h2>
-                    {currentDeck?.name === selectedDeck?.name ? (
-                        <button className='backBtn'>Selected</button>
-                    ):(
-                        <button className='backBtn unselectedBtn' onClick={()=> {
-                            if(currentDeck){setUserSelectedDeck(currentDeck?.id)}
-                        }}>Select</button>
+                    {isMobile() && <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>}
+                    {!isMobile() && (
+                        <>
+                        {currentDeck?.name === selectedDeck?.name ? (
+                            <button className='backBtn'>Selected</button>
+                        ):(
+                            <button className='backBtn unselectedBtn' onClick={()=> {
+                                if(currentDeck){setUserSelectedDeck(currentDeck?.id)}
+                            }}>Select</button>
+                        )}
+                        </>
                     )}
                     {
                         user?.type === "Admin" && (
@@ -171,6 +153,17 @@ function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoad
                     }
                 </div>
                 <div className='deckCardDesc'>
+                                    {isMobile() && (
+                    <div>
+                    {currentDeck?.name === selectedDeck?.name ? (
+                                <button className='backBtn'>Selected</button>
+                            ):(
+                                <button className='backBtn unselectedBtn' onClick={()=> {
+                                    if(currentDeck){setUserSelectedDeck(currentDeck?.id)}
+                                }}>Select</button>
+                            )}
+                        </div>
+                    )}
                     {user?.type !== "Admin" || adminEditing === false ? (
                         <p>{currentDeck?.description}</p>
                     ):(
@@ -190,44 +183,14 @@ function DeckPanel({ user, selectedDeck, setUserSelectedDeck, showAlert, setLoad
                     )}
                 </div>
                 {user?.type === "Admin" && adminEditing === true && (
-                    <>
-                    <div className='colorGrid'>
-                        {Object.keys(currentDeck?.style ?? {}).filter(
-                            (styleKey) =>
-                                styleKey !== "border-radius" &&
-                                styleKey !== "border-radius-small"
-                            )
-                            .map((styleKey) => (
-                            <div className='deckColorInput'>
-                                <label>{styleKey} Color: </label>
-                                <Block
-                                    className='colorInput'
-                                    style={{ marginLeft: 20 }}
-                                    color={editableDeck?.style[styleKey]}
-                                    onChange={(color) => {
-                                        if (!editableDeck) return;
-
-                                        setEditableDeck({
-                                            ...editableDeck,
-                                            style: {
-                                                ...editableDeck.style,
-                                                [styleKey]: color.hex,
-                                            },
-                                        });
-                                    }}
-                                />
-                            </div>
-                        ))}
-                    </div>
                     <button className='deckHeadingBtn' onClick={()=>handleSaveEdits()}>Save Edits</button>
-                    </>
                 )}
                 <h3 className='innerSuitTitle'>Deck Icon & Back</h3>
                 <div className='topOuterDeckCardGrid'>
                     <div className="modalCardFace">
                         <div className='modalCardImgOuter'>
                             <div className='cardImgOuter'>
-                                <SelectedIcon className="cardImg" />
+                                <SelectedIcon className="cardImg" style={{backgroundColor: theme['main-background'], color: theme['accent-background']}}/>
                             </div>
                         </div>
                         <p className="cardDesc">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import type { User, Deck } from './types'
+import type { User, Deck, Card } from './types'
+import { getDeckTheme } from './types'
 import RiderWaiteCardIcon from './assets/images/Rider-Waite/card-icon.svg?react'
 import BunnyWaiteCardIcon from './assets/images/Bunny-Waite/card-icon.svg?react'
 import RiderWaiteIcon from './assets/images/Rider-Waite/card-icon-small.svg?react'
@@ -46,6 +47,7 @@ function App() {
   const [user, setUser] = useState<User | null>(null)
   const tabs = ["Cards", "Relations", "Decks", "Spreads", "Readings", "Account"];
   const [decks, setDecks] = useState<Deck[]>();
+  const [cards, setCards] = useState<Card[]>([]);
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
   const [width, setWidth] = useState(window.innerWidth);
 
@@ -135,6 +137,13 @@ function App() {
   }, [showOverlay]);
 
   useEffect(() => {
+    fetch('/api/cards')
+      .then(res => res.json())
+      .then((data: Card[]) => setCards(data))
+      .catch(err => console.error('Failed to fetch cards:', err));
+  }, []);
+
+  useEffect(() => {
     fetch('/api/decks')
       .then(res => res.json())
       .then(data => {
@@ -177,48 +186,20 @@ function App() {
       activeDeck = matchedDeck ?? null;
     }
 
-    if (activeDeck === null || activeDeck.style === null) {
+    if (activeDeck === null) {
       console.log('[theme effect] bail: activeDeck undefined');
       return;
     }
 
-    let selectedStyle = activeDeck.style;
-
-    const requiredKeys = [
-      'main-background',
-      'main-text',
-      'secondary-background',
-      'secondary-text',
-      'accent-background',
-      'accent-text',
-      'border-radius',
-      'border-radius-small',
-    ] as const;
-
-    for (const key of requiredKeys) {
-      if (selectedStyle[key] == null) {
-        console.warn(`Theme apply skipped — missing "${key}" on`, selectedStyle);
-        return;
-      }
-    }
-
-    for (const key of requiredKeys) {
-      if (selectedStyle[key] == null) return;
-    }
-
-    for (const key of requiredKeys) {
-      if (selectedStyle[key] == null) {
-        console.warn(`Theme apply skipped — missing "${key}" on`, selectedStyle);
-        return;
-      }
-    }
+    // Themes are a static name -> Theme lookup now (see types.ts), not data
+    // fetched off the deck — always complete, so there's nothing left to
+    // validate here.
+    const selectedStyle = getDeckTheme(activeDeck.name);
 
     const root = document.documentElement;
 
     for (const [key, value] of Object.entries(selectedStyle)) {
-      if (value != null) {
-        root.style.setProperty(`--${key}`, value);
-      }
+      root.style.setProperty(`--${key}`, value);
     }
 
     const themeColor = selectedStyle['main-background'];
@@ -454,52 +435,52 @@ function App() {
 
             <Route
               path="/account"
-              element={<AccountPanel user={user} setUser={setUser} login={login} handleLogout={handleLogout} selectedDeck={selectedDeck} token={token} showAlert={showAlert} setLoading={setLoading} isMobile={isMobile}/>}
+              element={<AccountPanel user={user} setUser={setUser} login={login} handleLogout={handleLogout} token={token} cards={cards} decks={decks ?? []} showAlert={showAlert} setLoading={setLoading} isMobile={isMobile}/>}
             />
 
             <Route
               path="/cards/:nameShort"
-              element={<CardPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
+              element={<CardPanel user={user} selectedDeck={selectedDeck} cards={cards} setCards={setCards} showAlert={showAlert} token={token}/>}
             />
 
             <Route
               path="/cards"
-              element={<CardsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading}/>}
+              element={<CardsPanel user={user} selectedDeck={selectedDeck} cards={cards} showAlert={showAlert} isMobile={isMobile}/>}
             />
 
             <Route
               path="/relations"
-              element={<RelationsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+              element={<RelationsPanel user={user} selectedDeck={selectedDeck} cards={cards} showAlert={showAlert} token={token} Icon={Icon}/>}
             />
 
             <Route
               path="/relations/:nameShort1"
-              element={<RelationsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+              element={<RelationsPanel user={user} selectedDeck={selectedDeck} cards={cards} showAlert={showAlert} token={token} Icon={Icon}/>}
             />
 
             <Route
               path="/relations/none/:nameShort2"
-              element={<RelationsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+              element={<RelationsPanel user={user} selectedDeck={selectedDeck} cards={cards} showAlert={showAlert} token={token} Icon={Icon}/>}
             />
 
             <Route
               path="/relations/:nameShort1/:nameShort2"
-              element={<RelationsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+              element={<RelationsPanel user={user} selectedDeck={selectedDeck} cards={cards} showAlert={showAlert} token={token} Icon={Icon}/>}
             />
 
             <Route
               path="/decks"
-              element={<DecksPanel user={user} selectedDeck={selectedDeck} setLoading={setLoading} setUserSelectedDeck={setUserSelectedDeck}/>}
+              element={<DecksPanel user={user} selectedDeck={selectedDeck} decks={decks ?? []} setUserSelectedDeck={setUserSelectedDeck}/>}
             />
 
             <Route
               path="/decks/:deckName"
-              element={<DeckPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} setUserSelectedDeck={setUserSelectedDeck} isMobile={isMobile}/>}
+              element={<DeckPanel user={user} selectedDeck={selectedDeck} decks={decks ?? []} setDecks={setDecks} cards={cards} showAlert={showAlert} token={token} setUserSelectedDeck={setUserSelectedDeck} isMobile={isMobile}/>}
             />
 
             <Route
               path="/spreads"
-              element={<SpreadsPanel setLoading={setLoading} CardIcon={CardIcon}/>}
+              element={<SpreadsPanel setLoading={setLoading} CardIcon={CardIcon} isMobile={isMobile}/>}
             />
 
             <Route
@@ -509,17 +490,17 @@ function App() {
 
             <Route
               path="/readings"
-              element={<ReadingsPanel user={user} selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon}/>}
+              element={<ReadingsPanel user={user} selectedDeck={selectedDeck} decks={decks ?? []} cards={cards} showAlert={showAlert} setLoading={setLoading} token={token} Icon={Icon} CardIcon={CardIcon} isMobile={isMobile}/>}
             />
 
             <Route
               path="/readings/:readingId"
-              element={<ReadingPanel selectedDeck={selectedDeck} showAlert={showAlert} setLoading={setLoading} token={token}/>}
+              element={<ReadingPanel selectedDeck={selectedDeck} decks={decks ?? []} cards={cards} showAlert={showAlert} setLoading={setLoading} token={token} isMobile={isMobile} setUserSelectedDeck={setUserSelectedDeck}/>}
             />
 
             <Route
               path="/physical/:deckName/:cardNameShort"
-              element={<PhysicalCard />}
+              element={<PhysicalCard decks={decks ?? []} cards={cards} setUserSelectedDeck={setUserSelectedDeck} />}
             />
           </Routes>
         </div>

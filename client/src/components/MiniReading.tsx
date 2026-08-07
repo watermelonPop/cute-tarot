@@ -8,14 +8,17 @@ import ConfirmModal from '../components/ConfirmModal'
 
 interface MiniReadingProps {
     cards: Card[]
-    selectedDeck: Deck | null
+    // The deck this specific reading was created with — not the app's
+    // currently-equipped deck, since those can differ after the user
+    // switches decks post-creation.
+    deck: Deck | null
     reading: Reading
     spreads: Spread[]
     editingReadings?: boolean
     onDeleteReading?: (readingId: string) => void
 }
 
-function MiniReading({ selectedDeck, reading, cards, spreads, editingReadings, onDeleteReading }: MiniReadingProps) {
+function MiniReading({ deck, reading, cards, spreads, editingReadings, onDeleteReading }: MiniReadingProps) {
     const navigate = useNavigate();
     const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
 
@@ -49,7 +52,7 @@ function MiniReading({ selectedDeck, reading, cards, spreads, editingReadings, o
                 return (
                 <div key={cardId} className="spreadImgBorder">
                     <img
-                    src={`${selectedDeck?.images['card-front']}/${card.type.replaceAll(" ", "")}/${card.nameShort}.png`}
+                    src={`${deck?.images['card-front']}/${card.type.replaceAll(" ", "")}/${card.nameShort}.png`}
                     className={reading.reversalValues[idx] === true ? "spreadImg upside-down" : "spreadImg"}
                     alt={`Deck card ${card.name}`}
                     />
@@ -59,15 +62,15 @@ function MiniReading({ selectedDeck, reading, cards, spreads, editingReadings, o
         </div>
         <h2 className="spreadTitle"><span className="spreadTitleClamp">{reading.name}</span></h2>
         <div className="readingDetails">
-            <p>{formatDate(reading.date)}</p>
+            <span>{formatDate(reading.date)}</span>
+            <span>{spreads.find(s => s.id === reading.spread)?.name}</span>
             {reading.reversals === true && (
-                <p>Reversals allowed.</p>
+                <span className="reversalsBadge">Reversed</span>
             )}
-            <p>
-                {spreads.find(s => s.id === reading.spread)?.name}
-            </p>
-            <p>{reading.topic}</p>
-        </div>
+        {reading.topic && (
+            <p className="readingTopic">{reading.topic}</p>
+        )}
+    </div>
       </div>
       <ConfirmModal
         prompt={`Delete "${reading.name}"? This can't be undone.`}

@@ -131,10 +131,36 @@
   width: 95%;
 }
 
-.cardBackLogo {
-    width: 4rem;
-    height: auto;
+/* Wraps .cardBackLogo so the drop-shadow filter lives on an unclipped
+   element — clip-path and filter on the SAME element would clip the
+   shadow's own output too, and since the clip is percentage-based while
+   the shadow's offset/blur are fixed px, that clipped the shadow visibly
+   at small render sizes even though it looked fine at larger ones. */
+.cardBackLogoShadowWrap {
+    display: flex;
+    width: 4rem; /* moved here from .cardBackLogo — it needs a definite width for the icon's own 100% (and the mobile override's %) to resolve against */
     filter: drop-shadow(4px 2px 4px var(--accent-background));
+}
+
+.cardBackLogo {
+    width: 100%;
+    height: auto;
+}
+
+/* The source SVG's viewBox is a tight crop of a larger illustration — a
+   design element sitting right at that crop boundary becomes a visible
+   line, but only once the icon renders BELOW a certain size (confirmed:
+   appeared in a 3-card spread, and in a 2-card spread only after narrowing
+   the window). Scoping the clip to small containers only, instead of
+   applying it unconditionally, avoids cropping real artwork off larger
+   cards that never show the artifact in the first place. 130px is a first
+   guess roughly between the measured 3-card (~100px) and 2-card (~154px)
+   .cardImgInnerBorder widths — narrow this up/down if it doesn't line up
+   with where the artifact actually starts/stops appearing. */
+@container card (max-width: 130px) {
+    .cardBackLogo {
+        clip-path: inset(0% 0%);
+    }
 }
 
 

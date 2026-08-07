@@ -225,12 +225,22 @@ input[type="checkbox"]:not(:disabled):checked {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 95%;
+    width: 100%;
 }
 
-.readingParagraph{
+.readingParagraph {
+  width: 100%;
+  column-fill: balance;
+  /* no column-count — text is always a single column */
   line-height: 2;
-  width: 95%;
+  padding-left: 1rem;
+  padding-right: 2rem;
+}
+
+/* Reserve room for this section's notes panel only when it actually has
+   notes, so note-free sections use the full width for their columns. */
+.readingParagraph.withNotesPanel {
+  margin-right: 30%; /* notesPanel width (280px) + gap (20px) */
 }
 
 .combinedRelation{
@@ -309,12 +319,19 @@ input[type="checkbox"]:not(:disabled):checked {
 }
 
 .outerReading.pdf-export,
-.outerReading.pdf-export *,
+.outerReading.pdf-export *:not(.annotatedSegment),
 .outerReading.pdf-export .topReadingOuter,
 .outerReading.pdf-export .topInnerReadingOuter,
 .outerReading.pdf-export .readingResultCard,
 .outerReading.pdf-export .combinedRelation {
     background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* Preserve each highlight's own background color in the export — the
+   catch-all white-out above skips this selector, but we still want the
+   forced-black text color for readability against light highlight fills. */
+.outerReading.pdf-export .annotatedSegment {
     color: #000000 !important;
 }
 
@@ -365,17 +382,298 @@ input[type="checkbox"]:not(:disabled):checked {
   border-radius: 0.75rem;
 }
 
-.readingDetails{
-    width: 95%;
-    row-gap: 0.5rem;
+.annotationToolbar {
     display: flex;
     flex-direction: column;
+    min-width: 3rem;
+    background: var(--accent-background);
+    backdrop-filter: blur(6px);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    padding: 0.5rem;
+    z-index: 1000;
+    gap: 2px;
+    animation: annotationToolbarPop 0.12s ease-out;
+}
+
+/* small pointer triangle, since the toolbar sits above the selection */
+.annotationToolbar::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0 6px;
+    border-style: solid;
+    border-color: var(--accent-background) transparent transparent transparent;
+}
+
+.annotationToolbarBtn{
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: transparent;
+    color: var(--accent-text);
+    font-size: 1rem;
+    text-align: left;
+    padding: 0.5rem;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    transition: background-color 0.1s ease, color 0.1s ease;
+    column-gap: 0.5rem;
+    border: 2px solid transparent;
+    box-shadow: none;
+}
+
+.annotationToolbarBtn:hover,
+.annotationToolbarBtn:focus-visible, .annotationToolbarBtn.active {
+    color: var(--accent-background);
+    background-color: var(--secondary-text);
+    border-color: var(--accent-background);
+    outline: none;
+}
+
+.annotationToolbarBtn:active {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+@keyframes annotationToolbarPop {
+    from {
+        opacity: 0;
+        transform: translate(-50%, calc(-100% - 4px)) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, calc(-100% - 8px)) scale(1);
+    }
+}
+
+.annotatedSegment {
+    cursor: pointer;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.annotationSubmenu {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 1rem);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 7rem;
+    background: var(--accent-background);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    padding: 0.5rem;
+    z-index: 1001;
     justify-content: center;
     align-items: center;
 }
 
-.readingDetails p{
-    margin: 0;
+.annotationSwatchBtn {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
     padding: 0;
+}
+
+.annotationSwatchBtn.active {
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+
+.hiddenSegmentWrapper {
+    /* Deliberately plain inline — NOT inline-flex. inline-flex would make
+       the button and text one atomic sizing box, so growing the text grows
+       the whole box, which can force the entire unit (button included)
+       onto the next line — moving the button out from under the cursor,
+       firing mouseleave, collapsing the text, snapping the box back, and
+       firing mouseenter again: an infinite loop. As independent inline
+       boxes, growing the text can only push content that comes after it;
+       the button, already placed earlier on the line, never moves. */
+    cursor: pointer;
+}
+
+.hiddenSegmentToggleBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent-text);
+    color: var(--accent-background);
+    cursor: pointer;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.openHiddenSegment{
+    background: var(--accent-background);
+    color: var(--accent-text);
+}
+
+/* Purely cosmetic hover affordance, independent of the JS-driven text-grow
+   preview — segments over HOVER_PREVIEW_MAX_CHARS don't run that preview at
+   all anymore, but the button should still visibly respond to hover/touch
+   rather than looking inert. No layout properties involved, so this can't
+   reintroduce the reflow instability the preview itself had. */
+.hiddenSegmentToggleBtn:hover {
+    filter: brightness(1.15);
+}
+
+.hiddenSegmentText {
+    display: inline-block;
+    overflow: hidden;
+    /* Nowrap here only ever animates via a small, capped max-width (see
+       .visible below) — never the large/full-width reveal, which uses a
+       completely different mechanism (.revealed) so nowrap content is never
+       mid-transition at a large width. */
+    white-space: nowrap;
+    vertical-align: -0.55em; /* nudge down from text-bottom's baseline; tune this value */
+    max-width: 0;
+    color: var(--main-text);
+    opacity: 0.5;
+    transition: max-width 0.35s ease;
+}
+
+.hiddenSegmentText.visible {
+    /* Default (covers the hover preview): small, fixed cap. Kept small
+       enough that it can never grow large enough to force a paragraph
+       reflow, regardless of the underlying text's length — no length
+       threshold needed, since a hover preview can never destabilize at any
+       length if it never gets big enough to be the problem in the first
+       place. This is deliberately a truncated preview, not a bug — the full
+       text is one click away via .revealed below. */
+    max-width: 12rem;
+}
+
+/* Full open (click-persisted) is deliberately NOT given any explicit width
+   at all, animated or not — not even inline-block sized close to 100%
+   width, because a wide inline-block still forces line breaks before/after
+   itself, which looks exactly like a block element on its own line even
+   though it technically isn't one. And animating a *nowrap* width caused an
+   earlier flicker (the box's full intrinsic content width blows out
+   ancestors for the whole transition, only "resolving" once it settles).
+   So this switches straight to genuine `display:inline` — no box, text just
+   flows as part of the paragraph immediately, sharing lines with whatever
+   comes before/after it exactly like normal prose. max-width/height simply
+   don't apply to display:inline, so the only thing left to animate is
+   opacity, which inline elements still respect. */
+.hiddenSegmentText.revealed {
+    display: inline;
+    white-space: normal;
+    overflow-wrap: break-word;
+    max-width: none;
+    overflow: visible;
+    /* The base -0.55em vertical-align only exists to nudge the small
+       inline-block hover-preview box down to the surrounding text's
+       baseline — inline-block boxes align differently (bottom margin edge)
+       than plain text does by default. Once switched to true
+       display:inline, vertical-align shifts the actual text itself rather
+       than a box, so that same offset instead pushes real prose too low.
+       Reset to normal baseline alignment here, since this is now just text. */
+    vertical-align: baseline;
+}
+
+.annotationToolbarBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.annotationToolbarBtn:disabled:hover {
+    color: var(--main-background);
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.readingDetails {
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    box-sizing: border-box;
+    justify-content: center;
+    align-items: center;
     text-align: center;
+}
+
+/* --- Meta row: date, spread, reversals — same size, full opacity --- */
+
+.readingMetaRow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 1.2rem;
+}
+
+.readingMetaRow span {
+    font-size: 0.85rem;
+    line-height: 1.2;
+    color: var(--accent-text);
+    white-space: nowrap;
+}
+
+.metaDivider {
+    color: var(--secondary-background);
+}
+
+.reversalsBadge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    background-color: var(--secondary-background);
+    color: var(--secondary-text) !important;
+    white-space: nowrap;
+}
+
+/* --- Topic: same size as meta row, distinguished by weight only --- */
+
+.readingTopic {
+    margin: 0;
+    padding-top: 0.25rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.01em;
+    line-height: 1.3;
+    color: var(--accent-text);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.annotatedSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Positioning context for this section's own NotesPanel — scoped locally,
+   so each section's card offsets are measured against its own small box
+   rather than a page-wide shared ancestor. */
+.annotatedSectionBody {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.reversedReminder {
+  text-align: center;
+  font-style: italic;
+  opacity: 0.85;
+  background-color: var(--secondary-background);
+  width: fit-content;
+  padding: 0.5rem;
+  border-radius: var(--border-radius-small);
+  color: var(--secondary-text);
+  margin-bottom: 0;
 }

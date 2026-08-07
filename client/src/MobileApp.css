@@ -23,6 +23,7 @@
 
     .panelTitle{
         justify-content: center;
+        column-gap: 0.75rem !important;
     }
 
     .infoBtn{
@@ -42,6 +43,17 @@
     .cardsSearchDiv{
         margin-bottom: 0;
     }
+
+    /* Desktop sizes the dropdown menu to exactly match the toggle button's
+       width (left/right:0 on the same positioned parent). On a phone that's
+       too narrow for the suit names, so widen just the menu — anchored to
+       the right edge and growing left — without touching the toggle itself. */
+    .suitDropdownMenu{
+        left: auto !important;
+        right: 0 !important;
+        width: 160% !important;
+    }
+
 
     .panel {
         row-gap: 0.5rem !important;
@@ -65,8 +77,8 @@
     }
 
     .modal-content {
-        width: 95vw !important;
-        height: 98vh !important;
+        width: 90vw !important;
+        height: 90vh !important;
         border-radius: 0; /* edge-to-edge usually looks better without rounded corners too */
     }
 
@@ -91,8 +103,8 @@
     }
 
     .cardImgInnerBorder{
-        width: 7.5rem !important;
-        padding: 0.75rem !important;
+        width: 50% !important;
+        padding: 0.65rem !important;
     }
 
     .cardDescription, .readingDescription{
@@ -106,6 +118,7 @@
 
     .outerEditBtn{
         padding-bottom: 0rem !important;
+        padding-top: 0.5rem !important;
     }
 
     .tableOfContentsOuter{
@@ -133,7 +146,8 @@
         column-gap: 0.5rem !important;
         background-color: transparent !important;
         box-shadow: none !important;
-        padding-top: 0rem !important;
+        padding: 0rem !important;
+        width: 90% !important;
     }
 
     .cardDescTitle{
@@ -150,6 +164,18 @@
         column-gap: 0.5rem !important;
     }
 
+    /* DecksPanel is the only place clicking the card does something
+       different (navigate) from clicking the checkmark (equip). There's no
+       hover on touch to reveal the checkmark, so make it permanently visible
+       and clickable here instead of hover-gated — scoped to .miniDeckTile
+       so the pickers (SelectDeckPage etc., where the card and checkmark do
+       the same thing) keep their normal hover/tap-to-select behavior. */
+    .miniDeckTile .deckCheckmark{
+        opacity: 1 !important;
+        transform: scale(1) !important;
+        pointer-events: auto !important;
+    }
+
     .deckImgOuter{
         padding: 0.5rem !important;
         width: 95% !important;
@@ -164,6 +190,15 @@
         font-size: 1.25rem !important;
     }
 
+    .spreadTitle {
+        height: calc(1.3em * 3) !important; /* recalculated to match the new line-height */
+    }
+
+    .spreadTitleClamp {
+        line-clamp: 3 !important;
+        -webkit-line-clamp: 3 !important;
+    }
+
     .topOuterDeckCardGrid{
         width: 95% !important;
         padding-top: 0rem !important;
@@ -175,11 +210,164 @@
         row-gap: 1rem !important;
     }
 
+    /* SelectCardPage/SelectDeckPage/SelectSpreadPage are 2 columns wide on
+       mobile (see the forced repeat(2, ...) above, and modalOuterCardsGrid's
+       own auto-fill columns also settle at 2 up here). The checkmark badge
+       normally pokes half outside its tile via a negative right offset (see
+       .deckCheckmark in MiniDeck.css) — fine everywhere there's a margin
+       beyond the tile to poke into, but the last (2nd) column sits right up
+       against the modal's own edge on these narrow screens, where that
+       margin isn't wide enough, so the badge got clipped instead of
+       showing. Pulling it back to a small positive inset keeps it fully
+       inside the tile's own box for that column specifically — no longer
+       dependent on outside margin at all — without touching the badge's own
+       size, which stays exactly the same everywhere. */
+    .outerDeckGrid > .deckOuter:nth-child(2n) > .deckCheckmark,
+    .outerDeckGrid > .deckOuter:nth-child(2n) > .deckCheckmarkSelected,
+    .outerDeckGrid > .spreadOuter:nth-child(2n) > .deckCheckmark,
+    .outerDeckGrid > .spreadOuter:nth-child(2n) > .deckCheckmarkSelected,
+    .modalOuterCardsGrid > .modalCardFace:nth-child(2n) > .deckCheckmark,
+    .modalOuterCardsGrid > .modalCardFace:nth-child(2n) > .deckCheckmarkSelected {
+        right: -0.5rem !important;
+    }
+
     .cardParagraph{
         padding-top: 0rem !important;
     }
 
     .readingsForm{
         row-gap: 0.75rem !important;
+    }
+
+    .cardBackTextWrapper{
+        /* Scales with the card itself (.cardImgInnerBorder's container-type)
+           instead of a flat value — full 0.5rem when there's room (fewer
+           cards), tighter automatically when cards are cramped (e.g. a
+           3-card spread), without needing a hard breakpoint. */
+        row-gap: clamp(0.15rem, 5.4cqw, 0.5rem) !important;
+    }
+
+    .cardBackLogo {
+        border: none !important;
+    }
+
+    .cardBackLogoShadowWrap {
+        width: 60% !important;
+        filter: drop-shadow(1px 1px 2px var(--accent-background)) !important;
+    }
+
+    .userInfo{
+        width: 60% !important;
+    }
+
+    /* Inline note toggle: sits right after its annotated passage instead of
+       the desktop side-rail NotesPanel, which doesn't fit on narrow screens. */
+    .inlineNoteToggleBtn{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        margin: 0 0.15rem;
+        vertical-align: middle;
+        border: none;
+        border-radius: 50%;
+        background-color: var(--main-background);
+        color: var(--accent-background);
+        cursor: pointer;
+        font-size: 0.75rem;
+    }
+
+    .inlineNoteToggleBtn.active{
+        background-color: var(--accent-background);
+        color: var(--secondary-background);
+    }
+
+    /* Breaks the surrounding inline text flow so the expanded card renders
+       as its own block directly under the passage, accordion-style. */
+    .inlineNoteExpansion{
+        display: block;
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+
+    .inlineNoteExpansion .noteCard{
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+        padding-top: 1.75rem;
+        cursor: default;
+    }
+
+    /* Desktop positions these floating over the card's top-right corner,
+       which relies on side-panel margin the inline layout doesn't have —
+       keep them inside the card's own bounds here instead. */
+    .inlineNoteExpansion .noteCardActions{
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+
+    .inlineNoteExpansion .noteCardActionBtn{
+        width: 2rem;
+        height: 2rem;
+    }
+
+    /* Edit affordance is hover-only on desktop; there's no hover on touch. */
+    .inlineNoteExpansion .noteCardEditBtn{
+        opacity: 1 !important;
+        transform: none !important;
+        pointer-events: auto !important;
+    }
+
+    /* "No highlight" swatch — mobile-only entry in the highlight submenu,
+       since there's no hover-driven toggle-off-by-clicking-the-main-button
+       path like desktop has. Styled as an empty/crossed circle rather than
+       a color fill, so it reads as "remove" among the color swatches. */
+    .annotationSwatchNone{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--main-background);
+        color: var(--main-text);
+        font-size: 0.75rem;
+    }
+
+    .annotationSwatchNone.active{
+        border-color: var(--main-text);
+    }
+
+    .annotationSwatchNone:disabled{
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .alert{
+        width: 85% !important;
+    }
+
+    .readingsInputOuter label{
+        padding: 0.25rem !important;
+    }
+
+    .deckCardDesc{
+        flex-direction: column !important;
+    }
+
+    .deckCardDesc p{
+        margin-top: 0.5rem !important;
+    }
+
+    .deckCardDesc div{
+        margin-top: 0.5rem !important;
+        width: 100% !important;
+    }
+
+    .deckCardDesc button{
+        width: 95% !important;
+    }
+
+    .noteCardQuote.noteCardQuote{
+        color: var(--main-text) !important;
     }
 }

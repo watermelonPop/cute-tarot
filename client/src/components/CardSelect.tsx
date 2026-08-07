@@ -28,7 +28,9 @@ export default function CardSelect({ isAnimating, onSelect, Icon, selectedCard, 
                         <div className="cardBackOverlayWrapper">
                             <div className="innerCardImg cardAspect" onClick={onSelect}></div>
                             <div className="cardBackTextWrapper">
-                                <Icon className="cardBackLogo"/>
+                                <div className="cardBackLogoShadowWrap">
+                                    <Icon className="cardBackLogo"/>
+                                </div>
                                 <div className="cardBackText">
                                     Click to select card
                                 </div>

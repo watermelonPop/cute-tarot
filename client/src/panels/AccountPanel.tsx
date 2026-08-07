@@ -15,14 +15,14 @@ interface AccountProps {
     setUser: (user: User | null) => void
     login: () => void
     handleLogout: () => void
-    selectedDeck: Deck | null
     token: string | null
+    cards: Card[]
+    decks: Deck[]
     showAlert: (msg: string) => void
     setLoading: (loading: boolean) => void
     isMobile: () => boolean
 }
-function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, token, showAlert, isMobile }: AccountProps) {
-    const [cards, setCards] = useState<Card[]>([]);
+function AccountPanel({ user, login, handleLogout, setLoading, token, cards, decks, showAlert, isMobile }: AccountProps) {
     const [readings, setReadings] = useState<Reading[]>([]);
     const [spreads, setSpreads] = useState<Spread[]>([]);
     const [editingReadings, setEditingReadings] = useState<boolean>(false);
@@ -61,11 +61,7 @@ function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, tok
             const fullReadings = await Promise.all(readingPromises);
             setReadings(fullReadings);
 
-            // 3️⃣ Public routes (no JWT needed)
-            const cardsRes = await fetch('/api/cards');
-            const cardsData: Card[] = await cardsRes.json();
-            setCards(cardsData);
-
+            // Public route (no JWT needed) — cards/decks come from App-level state.
             const spreadsRes = await fetch('/api/spreads');
             const spreadsData: Spread[] = await spreadsRes.json();
             setSpreads(spreadsData);
@@ -150,11 +146,11 @@ function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, tok
                             <div className='outerDeckGrid'>
                                 {readings.map((reading) => (
                                     <>
-                                        <MiniReading selectedDeck={selectedDeck} reading={reading} cards={cards} spreads={spreads} editingReadings={false}></MiniReading>
+                                        <MiniReading deck={decks.find(d => d.id === reading.deckId) ?? null} reading={reading} cards={cards} spreads={spreads} editingReadings={false}></MiniReading>
                                     </>
                                 ))}
                             </div>
-                            <button className='backBtn' onClick={()=>setEditingReadings(true)}>Edit Readings</button>
+                            <button className='mainBtn' onClick={()=>setEditingReadings(true)}>Edit Readings</button>
                         </>
                     ):(
                         <>
@@ -162,12 +158,12 @@ function AccountPanel({ user, selectedDeck, login, handleLogout, setLoading, tok
                         <div className='outerDeckGrid'>
                             {readings.map((reading) => (
                                 <>
-                                    <MiniReading selectedDeck={selectedDeck} reading={reading} cards={cards} spreads={spreads} editingReadings={true} onDeleteReading={deleteReading}></MiniReading>
+                                    <MiniReading deck={decks.find(d => d.id === reading.deckId) ?? null} reading={reading} cards={cards} spreads={spreads} editingReadings={true} onDeleteReading={deleteReading}></MiniReading>
                                 </>
                             ))}
                         </div>
                         <button
-                            className='backBtn'
+                            className='mainBtn'
                             onClick={() => setEditingReadings(false)}
                             >
                             Done

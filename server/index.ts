@@ -20,6 +20,11 @@ const PORT = 3001
 // Middleware
 app.use(express.json())
 
+app.use((req, _res, next) => {
+  console.log(`[${req.method}] ${req.originalUrl}`)
+  next()
+})
+
 /*app.use(cors({
   origin: 'http://localhost:5173',
 }))*/

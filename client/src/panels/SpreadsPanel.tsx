@@ -12,9 +12,10 @@ import InfoPage from '../components/InfoPage'
 interface SpreadsPanelProps {
     setLoading: (loading: boolean) => void
     CardIcon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
+    isMobile: () => boolean
 }
 
-function SpreadsPanel({ setLoading, CardIcon }: SpreadsPanelProps) {
+function SpreadsPanel({ setLoading, CardIcon, isMobile }: SpreadsPanelProps) {
     const [spreads, setSpreads] = useState<Spread[]>([]);
     const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
@@ -36,7 +37,7 @@ function SpreadsPanel({ setLoading, CardIcon }: SpreadsPanelProps) {
                     <h2>Spreads</h2>
                     <span className='infoBtn' style={{backgroundColor: "transparent"}}></span>
                 </div>
-                <div className='outerDeckGrid'>
+                <div className={isMobile() ? "outerDeckGrid" : "modalOuterCardsGrid"}>
                     {spreads.map((spread) => (
                         <MiniSpread spread={spread} CardIcon={CardIcon}></MiniSpread>
                     ))}
@@ -44,10 +45,10 @@ function SpreadsPanel({ setLoading, CardIcon }: SpreadsPanelProps) {
             </div>
             <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
                 <InfoPage infoMessages={[
-                    `Welcome to the Spreads Page! `,
-                    `These are the tarot reading spreads available in the readings page. Each spread has a number of pulls, and a concept that aligns with each pull. Ex: For the Past, Present, Future spread, there are 3 pulls, one representing past, another representing present, and the last representing future.`,
-                    `Click on a spread to see more information in the larger Spread page.`,
-                    `This is by no means an exhaustive list, there are plenty of other tarot spreads out there! These are just the easiest and most common ones I've found. `
+                    `Welcome to the Spreads Page!`,
+                    `These are the tarot spreads available on the Readings page. Each spread has a set number of pulls, with each pull tied to a specific concept. EX: a Past, Present, Future spread has 3 pulls, one for each.`,
+                    `Click a spread to see more information on its full page.`,
+                    `This is by no means an exhaustive list. There are plenty of other tarot spreads out there, these are just the most common ones I've found.`
                 ]} />
             </Modal>
         </>

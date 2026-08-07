@@ -3,147 +3,58 @@ import '../App.css'
 import './panel.css'
 import './ReadingsPanel.css'
 import './RelationsPanel.css'
+import '../components/NotesPanel.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import type { User, Reading, Deck, Relation, Spread, Card, Topic, DrawingMethod, Suit } from '../types'
 import { useNavigate } from 'react-router-dom'
 import SparkleCheckbox from '../components/SparkleCheckbox'
 import CardSelect from '../components/CardSelect'
+import DeckSelect from '../components/DeckSelect'
+import SpreadSelect from '../components/SpreadSelect'
 import Modal from '../components/Modal'
 import InfoPage from '../components/InfoPage'
 import SelectCardPage from '../components/SelectCardPage'
-import type { TocItem } from '../components/TableOfContents'
+import SelectDeckPage from '../components/SelectDeckPage'
+import SelectSpreadPage from '../components/SelectSpreadPage'
 import TableOfContents from '../components/TableOfContents'
-
-// Add this type declaration at the top of your file (after imports)
-declare global {
-    interface Window {
-        html2pdf: any;
-    }
-}
+import AnnotationToolbar from '../components/AnnotationToolbar'
+import ReadingCardSection from '../components/ReadingCardSection'
+import CombinedRelationsSection from '../components/CombinedRelationsSection'
+import NotesSection from '../components/NotesSection'
+import { useAnnotationSelection } from '../hooks/useAnnotationSelection'
+import { useAnnotations } from '../hooks/useAnnotations'
+import { findAnnotationAtSelection, isRangeFullyHideMode } from '../lib/annotation/core'
+import { buildReadingToc } from '../lib/readingHelpers'
+import { exportReadingToPdfNative } from '../lib/pdf/export'
+import { authFetch } from '../lib/authFetch'
 
 interface ReadingsPanelProps {
     user: User | null
     selectedDeck: Deck | null
+    decks: Deck[]
+    cards: Card[]
     showAlert: (msg: string) => void
     setLoading: (loading: boolean) => void
     token: string | null
     Icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
+    CardIcon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
+    isMobile: () => boolean
 }
 
-// Update the loader function
-const loadPdfLibraries = (): Promise<any> => {
-    return new Promise((resolve, reject) => {
-        // Check if already loaded
-        if (window.html2pdf) {
-            resolve(window.html2pdf);
-            return;
-        }
-
-        let scriptsLoaded = 0;
-        const scriptsNeeded = 2;
-
-        const checkAllLoaded = () => {
-            scriptsLoaded++;
-            if (scriptsLoaded === scriptsNeeded) {
-                resolve(window.html2pdf);
-            }
-        };
-
-        // Load html2canvas
-        const html2canvasScript = document.createElement('script');
-        html2canvasScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        html2canvasScript.onload = checkAllLoaded;
-        html2canvasScript.onerror = reject;
-        document.head.appendChild(html2canvasScript);
-
-        // Load jsPDF
-        const jsPdfScript = document.createElement('script');
-        jsPdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        jsPdfScript.onload = checkAllLoaded;
-        jsPdfScript.onerror = reject;
-        document.head.appendChild(jsPdfScript);
-    });
-};
-
-function buildReadingToc(
-    selectedCards: (Card | null)[],
-    spread: Spread | null,
-    relations: Relation[],
-    cards: Card[],
-    topic: Topic,
-    reversals: boolean,
-    reversalValues: boolean[]
-): TocItem[] {
-    const items: TocItem[] = [];
-
-    selectedCards.forEach((card, i) => {
-        if (!card) return;
-
-        const hasTopicMeaning =
-            (topic === 'Advice' && card.meaningAdvice) ||
-            (topic === 'Love & Relationships' && card.meaningLove) ||
-            (topic === 'Career' && card.meaningCareer);
-
-        const children: TocItem[] = [
-            { label: 'Description', targetId: `cardDesc${i}` },
-            {
-                label: reversals && reversalValues[i] ? 'Meaning (Reversed)' : 'Meaning (Upright)',
-                targetId: `cardMeaning${i}`,
-            },
-        ];
-
-        if (topic !== 'General' && hasTopicMeaning) {
-            children.push({ label: `Meaning for ${topic}`, targetId: `cardSpecMeaning${i}` });
-        }
-
-        if (spread !== null && spread.name === 'Yes or No') {
-            children.push({ label: 'Finally: Yes or No?', targetId: 'cardYesNo' });
-        }
-
-        items.push({
-            label: `${spread?.pulls[i]}: ${card.name}`,
-            targetId: `cardTitle${i}`,
-            children,
-        });
-    });
-
-    if (spread !== null && spread.numPulls > 1) {
-        const combinedChildren: TocItem[] = relations.map((relation, rIdx) => {
-            const cardNames = relation.cards
-                .map(cardId => cards.find(c => c.id === cardId)?.name ?? 'Unknown card')
-                .join(' & ');
-
-            const hasTopicDescription =
-                (topic === 'Advice' && relation.descriptionAdvice) ||
-                (topic === 'Love & Relationships' && relation.descriptionLove) ||
-                (topic === 'Career' && relation.descriptionCareer);
-
-            const children: TocItem[] = [];
-            if (topic !== 'General' && hasTopicDescription) {
-                children.push({ label: `${cardNames} in ${topic}`, targetId: `relationSpecMeaning${rIdx}` });
-            }
-
-            return {
-                label: cardNames,
-                targetId: `relationName${rIdx}`,
-                children,
-            };
-        });
-
-        items.push({
-            label: 'Combined',
-            targetId: 'combined',
-            children: combinedChildren,
-        });
-    }
-
-    return items;
-}
-
-function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon }: ReadingsPanelProps) {
-    const [cards, setCards] = useState<Card[]>([]);
+function ReadingsPanel({ user, selectedDeck, decks, cards, showAlert, setLoading, token, Icon, CardIcon, isMobile }: ReadingsPanelProps) {
     const [spreads, setSpreads] = useState<Spread[]>([]);
+    // Deck this reading will be created with. Defaults to (and stays in
+    // sync with) the app's globally-equipped deck until the user overrides
+    // it via the Deck row's picker — a per-form choice, distinct from
+    // equipping a deck app-wide.
+    const [formDeck, setFormDeck] = useState<Deck | null>(selectedDeck);
+    // Tracks whether the user has explicitly picked a deck via the Deck
+    // row's modal — once true, formDeck stops following selectedDeck so an
+    // in-progress override isn't clobbered by an unrelated global change.
+    const deckOverriddenRef = useRef(false);
+    const [deckModalOpen, setDeckModalOpen] = useState<boolean>(false);
+    const [spreadModalOpen, setSpreadModalOpen] = useState<boolean>(false);
     const [drawingMethod, setDrawingMethod] = useState<DrawingMethod>('Manual');
     const [selectedSpreadId, setSelectedSpreadId] = useState<string | null>(null);
     const [selectedCards, setSelectedCards] = useState<(Card | null)[]>([]);
@@ -158,34 +69,77 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
     const headingRef = useRef<HTMLHeadingElement | null>(null);
     const spread = spreads.find(s => s.id === selectedSpreadId) ?? null;
     const [createdReading, setCreatedReading] = useState<Reading | null>(null);
+    // Only true once the reading has actually been saved to the DB (logged
+    // in AND the POST succeeded) — controls whether annotation edits below
+    // hit the API or just update createdReading locally in memory.
+    const [readingPersisted, setReadingPersisted] = useState<boolean>(false);
     const [isAnimating, setIsAnimating] = useState<boolean>(false);
     const [readingName, setReadingName] = useState<string>("");
+    const [editingNotes, setEditingNotes] = useState<boolean>(false);
+    const [editedNotes, setEditedNotes] = useState<string>("");
     const pdfRef = useRef<HTMLDivElement | null>(null);
     const navigate = useNavigate()
     const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
-    // Load all cards
+    const {
+        pendingSelection,
+        clearSelectionToolbar,
+        toolbarRef,
+        highlightSubmenuOpen,
+        setHighlightSubmenuOpen,
+        noteSubmenuOpen,
+        setNoteSubmenuOpen,
+        handleContainerMouseDown,
+        handleTextSelection,
+        selectAnnotationAndOpenToolbar,
+    } = useAnnotationSelection(pdfRef, createdReading);
+
+    const {
+        handleHide,
+        handleStrikethrough,
+        handleHighlight,
+        handleNote,
+        handleDeleteAnnotationNote,
+        handleEditAnnotationNote,
+    } = useAnnotations({
+        readingId: createdReading?.id,
+        token,
+        reading: createdReading,
+        setReading: setCreatedReading,
+        showAlert,
+        clearSelectionToolbar,
+        persistRemotely: readingPersisted,
+    });
+
+    // Load all spreads. Cards/decks come from App-level state instead of
+    // being fetched here.
     useEffect(() => {
         setLoading(true);
-        fetch('/api/cards')
+        fetch('/api/spreads')
         .then(res => res.json())
-        .then((data: Card[]) => {
-            setCards(data);
-            fetch('/api/spreads')
-            .then(res => res.json())
-            .then((data: Spread[]) => {
-                setSpreads(data);
-                if (data.length > 0) {
-                    setSelectedSpreadId(data[0].id);
-                }
-                setLoading(false);
-            });
+        .then((data: Spread[]) => {
+            setSpreads(data);
+            if (data.length > 0) {
+                setSelectedSpreadId(data[0].id);
+            }
+            setLoading(false);
         })
         .catch(err => {
-            console.error('Failed to fetch cards:', err);
+            console.error('Failed to fetch spreads:', err);
             setLoading(false);
         })
     }, [])
+
+    // Keep formDeck in sync with the app's globally-equipped deck until the
+    // user explicitly overrides it here — covers both this panel mounting
+    // before App's own deck fetch resolves (selectedDeck arriving late) and
+    // selectedDeck changing later on (e.g. logging in swaps in the user's
+    // saved deck).
+    useEffect(() => {
+        if (!deckOverriddenRef.current) {
+            setFormDeck(selectedDeck);
+        }
+    }, [selectedDeck])
 
     useEffect(() => {
         const s = spreads.find(sp => sp.id === selectedSpreadId);
@@ -197,6 +151,9 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
     useEffect(() => {
         setShowDescription(false);
         setCreatedReading(null);
+        setReadingPersisted(false);
+        setEditingNotes(false);
+        setEditedNotes("");
     }, [selectedSpreadId, drawingMethod]);
 
     useEffect(() => {
@@ -288,7 +245,7 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
         // =============================
         // Fetch relations (if needed)
         // =============================
-        let relationData:any = {};
+        let relationData: Relation[] = [];
 
         if (safeFinalCards.length > 1) {
             const res = await fetch('/api/relations/nCardRelations', {
@@ -309,18 +266,23 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
         // =============================
         let created: Reading = {
             id: "r0",
+            name: readingName || undefined,
             date: String(new Date()),
             cards: safeFinalCards.map(card => card.id),
             reversals,
             reversalValues: finalReversalValues,
             spread: spread?.id,
             topic,
-            relations: relationData.relationIds,
+            relations: relationData.map((r: Relation) => r.id),
+            annotations: [],
+            deckId: formDeck?.id ?? "",
         } as Reading;
 
         // =============================
         // Save to backend (if logged in)
         // =============================
+        setReadingPersisted(false);
+
         if (user && spread) {
             const sanitizedReversalValues =
             safeFinalCards.map((_, i) => finalReversalValues[i] ?? false);
@@ -337,6 +299,7 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
                 topic,
                 cardIds: safeFinalCards.map(card => card.id),
                 reversalValues: reversals ? sanitizedReversalValues : [],
+                deckId: formDeck?.id,
             }),
             });
 
@@ -350,8 +313,11 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
             created = {
                 ...created,
                 id: savedReading.id,
+                name: savedReading.name,
                 date: savedReading.date,
+                annotations: savedReading.annotations ?? [],
             };
+            setReadingPersisted(true);
             }
         }
 
@@ -370,131 +336,50 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
     };
 
 
+    // Logged-out readings are never persisted at all (the whole reading,
+    // annotations included, only lives in this component's state and is
+    // gone on refresh) — so an unpersisted note just updates createdReading
+    // locally, same as any other in-memory annotation edit here. Once the
+    // reading IS persisted, notes go through the same updateNotes endpoint
+    // ReadingPanel uses for a saved reading.
+    const handleSaveNotes = async (newNotes: string) => {
+        if (!createdReading) return;
+
+        if (readingPersisted) {
+            try {
+                const updatedReading = await authFetch<Reading>(`/api/readings/${createdReading.id}/updateNotes`, token, {
+                    method: 'POST',
+                    body: JSON.stringify({ notes: newNotes }),
+                });
+                setCreatedReading(updatedReading);
+            } catch (err) {
+                console.error('Failed to save notes:', err);
+                showAlert('Failed to save notes. Please try again.');
+                return;
+            }
+        } else {
+            setCreatedReading({ ...createdReading, notes: newNotes });
+        }
+
+        setEditingNotes(false);
+    };
+
     const handleDownloadPDF = async () => {
-        if (!pdfRef.current) {
-            console.error('pdfRef is null');
+        if (!createdReading || !formDeck) {
             showAlert('Cannot generate PDF. Please try again.');
             return;
         }
 
         try {
-            await loadPdfLibraries();
-
-            console.log('Starting PDF generation...');
-
-            // Clone the element for off-screen rendering
-            const clone = pdfRef.current.cloneNode(true) as HTMLElement;
-            clone.classList.add('pdf-export');
-            
-            // Position clone off-screen but make it visible to html2canvas
-            const container = document.createElement('div');
-            container.style.position = 'fixed';
-            container.style.left = '-9999px';
-            container.style.top = '0';
-            container.style.width = pdfRef.current.offsetWidth + 'px';
-            container.appendChild(clone);
-            document.body.appendChild(container);
-
-            // Small delay to ensure clone is rendered
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            // Use html2canvas on the clone
-            const canvas = await (window as any).html2canvas(clone, {
-                scale: 2,
-                useCORS: false,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                logging: false,
-                width: clone.scrollWidth,
-                height: clone.scrollHeight,
-            });
-
-            console.log('Canvas created:', {
-                width: canvas.width,
-                height: canvas.height
-            });
-
-            // Remove the clone container
-            document.body.removeChild(container);
-
-            const { jsPDF } = (window as any).jspdf;
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            
-            const margin = 10;
-            const contentWidth = pdfWidth - (2 * margin);
-            const contentHeight = pdfHeight - (2 * margin);
-            
-            // Calculate scaling based on width
-            const imgHeight = (canvas.height * contentWidth) / canvas.width;
-            
-            // How much height fits on each page
-            const pageContentHeight = contentHeight;
-            const totalPages = Math.ceil(imgHeight / pageContentHeight);
-
-            for (let page = 0; page < totalPages; page++) {
-                if (page > 0) {
-                    pdf.addPage();
-                }
-                
-                // Calculate the vertical position for this page in the scaled image
-                const yPositionInScaledImg = page * pageContentHeight;
-                
-                // Map back to canvas coordinates
-                const sourceY = (yPositionInScaledImg * canvas.height) / imgHeight;
-                const sourceHeight = Math.min(
-                    (pageContentHeight * canvas.height) / imgHeight,
-                    canvas.height - sourceY
-                );
-                
-                // Create a temporary canvas for this page's slice
-                const pageCanvas = document.createElement('canvas');
-                pageCanvas.width = canvas.width;
-                pageCanvas.height = sourceHeight;
-                
-                const ctx = pageCanvas.getContext('2d');
-                if (ctx) {
-                    // Draw the slice from the main canvas
-                    ctx.drawImage(
-                        canvas,
-                        0, sourceY, // source x, y
-                        canvas.width, sourceHeight, // source width, height
-                        0, 0, // destination x, y
-                        pageCanvas.width, pageCanvas.height // destination width, height
-                    );
-                    
-                    const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.98);
-                    
-                    // Calculate actual height for this slice in PDF
-                    const sliceHeight = (pageCanvas.height * contentWidth) / pageCanvas.width;
-                    
-                    pdf.addImage(
-                        pageImgData,
-                        'JPEG',
-                        margin,
-                        margin,
-                        contentWidth,
-                        sliceHeight
-                    );
-                }
-            }
-
-            pdf.save(`${readingName || 'tarot-reading'}.pdf`);
-            console.log('PDF saved successfully');
-
-        } catch (error) {
-            console.error('Failed to generate PDF:', error);
+            await exportReadingToPdfNative(
+                { reading: createdReading, cards, spreads, relations, selectedDeck: formDeck },
+                `${createdReading.name || readingName || 'tarot-reading'}.pdf`
+            );
+        } catch (err) {
+            console.error('Failed to generate PDF:', err);
             showAlert('Failed to generate PDF. Please try again.');
         }
     };
-
-
 
 
     // Desired display order
@@ -518,6 +403,36 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
         };
     });
 
+    const activeAnnotation = pendingSelection
+        ? findAnnotationAtSelection(
+              createdReading?.annotations ?? [],
+              pendingSelection.targetId,
+              pendingSelection.startOffset,
+              pendingSelection.endOffset
+          )
+        : undefined;
+
+    const isHiddenActive = pendingSelection
+        ? isRangeFullyHideMode(
+              createdReading?.annotations ?? [],
+              pendingSelection.targetId,
+              pendingSelection.startOffset,
+              pendingSelection.endOffset,
+              'hidden'
+          )
+        : false;
+    const isStrikethroughActive = pendingSelection
+        ? isRangeFullyHideMode(
+              createdReading?.annotations ?? [],
+              pendingSelection.targetId,
+              pendingSelection.startOffset,
+              pendingSelection.endOffset,
+              'strikethrough'
+          )
+        : false;
+    const isHighlightActive = !!activeAnnotation?.highlightColor;
+    const isNoteActive = !!activeAnnotation?.note;
+    const focusedAnnotationId = activeAnnotation?.id ?? null;
 
     return (
         <>
@@ -532,7 +447,7 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
                     <div className='topForm'>
                     {user !== null && (
                         <div className='readingsInputOuter'>
-                            <label htmlFor="name-input">Reading Name: </label>
+                            <label htmlFor="name-input">{!isMobile() && `Reading`} Name: </label>
                             <input autoComplete="off" id="name-input" type="text" onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                     setReadingName(e.target.value)
                                 } value={readingName} >
@@ -540,7 +455,15 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
                         </div>
                     )}
                     <div className='readingsInputOuter'>
-                        <label htmlFor='drawing-select'>Drawing Method: </label>
+                        <label htmlFor="deck-select">Deck: </label>
+                        <DeckSelect selectedDeck={formDeck} onSelect={() => setDeckModalOpen(true)} />
+                    </div>
+                    <div className='readingsInputOuter'>
+                        <label htmlFor="spread-select">Spread: </label>
+                        <SpreadSelect selectedSpread={spread} onSelect={() => setSpreadModalOpen(true)} />
+                    </div>
+                    <div className='readingsInputOuter'>
+                        <label htmlFor='drawing-select'>{!isMobile() && `Drawing`} Method: </label>
                         <select id="drawing-select" onChange={(e) => {
                             if (['Manual', 'Virtual'].includes(e.target.value as DrawingMethod)) {
                                 setDrawingMethod(e.target.value as DrawingMethod);
@@ -548,20 +471,6 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
                         }} value={drawingMethod}>
                             <option>Manual</option>
                             <option>Virtual</option>
-                        </select>
-                    </div>
-                    <div className='readingsInputOuter'>
-                        <label htmlFor="spread-select">Spread: </label>
-                        <select
-                            id="spread-select"
-                            value={selectedSpreadId ?? ''}
-                            onChange={(e) => setSelectedSpreadId(e.target.value)}
-                            >
-                            {spreads.map((spread) => (
-                                <option key={spread.id} value={spread.id}>
-                                {spread.name}
-                                </option>
-                            ))}
                         </select>
                     </div>
                     <div className='readingsInputOuter'>
@@ -604,7 +513,7 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
                                     }}
                                     Icon={Icon}
                                     selectedCard={selectedCards[i]}
-                                    selectedDeck={selectedDeck!}
+                                    selectedDeck={formDeck!}
                                     reversals={reversals}
                                     reversalValue={reversalValues[i]}
                                     setReversalValue={() => {
@@ -629,7 +538,7 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
                                     onSelect={() => {}}
                                     Icon={Icon}
                                     selectedCard={selectedCards[i]}
-                                    selectedDeck={selectedDeck!}
+                                    selectedDeck={formDeck!}
                                     reversals={reversals}
                                     reversalValue={reversalValues[i]}
                                     setReversalValue={() => {
@@ -645,118 +554,95 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
                         </div>
                     )}
                     
-                    <button className='backBtn' onClick={handleEnterClick}
+                    <button className='mainBtn' onClick={handleEnterClick}
                         disabled={isAnimating}>Get Reading</button>
                 
                     {createdReading !== null && showDescription && (
                         <>
-                        <div className='readingDescription' ref={pdfRef}>
+                        <div
+                            className='readingDescription'
+                            ref={pdfRef}
+                            onMouseUp={handleTextSelection}
+                            onMouseDown={handleContainerMouseDown}
+                        >
                             <div style={{ display: 'flex', columnGap: '1rem'}} ref={headingRef}>
                                 {user !== null && (
                                     <button className='mainBtn getReadingBtn' onClick={() => navigate(`/readings/${createdReading.id}`, { state: { scrollUp: true } })}>Go to Full Reading</button>
                                 )}
                                 <button onClick={handleDownloadPDF} className='mainBtn getReadingBtn'>Download</button>
                             </div>
-                            <TableOfContents items={buildReadingToc(selectedCards, spread, relations, cards, topic, reversals, reversalValues)} />
+                            <TableOfContents items={buildReadingToc(createdReading, cards, spread ? [spread] : [], relations)} />
                             {selectedCards.map((card, i) => {
-                                if (!card) return null;
+                                if (!card || !spread) return null;
 
                                 return (
-                                    <div key={i} className="readingResultCard">
-                                        <h3 id={`cardTitle${i}`} className="sectionHeading">
-                                            {spread?.pulls[i]}: {card.name}
-                                        </h3>
-
-                                        <h4 id={`cardDesc${i}`} className="subHeading">Description</h4>
-                                        <p className='readingParagraph'>{card.descriptions[selectedDeck!.id]}</p>
-
-                                        {reversals && reversalValues[i] ? (
-                                            <>
-                                                <h4 id={`cardMeaning${i}`} className="subHeading">Meaning (Reversed)</h4>
-                                                <p className='readingParagraph'>{card.meaningRev}</p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <h4 id={`cardMeaning${i}`} className="subHeading">Meaning (Upright)</h4>
-                                                <p className='readingParagraph'>{card.meaningUp}</p>
-                                            </>
-                                        )}
-
-                                        {topic !== 'General' && (
-                                            <>
-                                                <h4 id={`cardSpecMeaning${i}`} className="subHeading">Meaning for {topic}</h4>
-                                                {reversals === true && reversalValues[i] === true && (
-                                                    <>
-                                                        <p>Remember: This card is reversed! Negate the following meaning.</p>
-                                                    </>
-                                                )}
-                                                {topic === 'Advice' && <p className='readingParagraph'>{card.meaningAdvice}</p>}
-                                                {topic === 'Love & Relationships' && <p className='readingParagraph'>{card.meaningLove}</p>}
-                                                {topic === 'Career' && <p className='readingParagraph'>{card.meaningCareer}</p>}
-                                            </>
-                                        )}
-
-                                        {spread?.name === 'Yes or No' && (
-                                            <>
-                                                <h4 id={`cardYesNo`} className="subHeading">Finally: Yes or No?</h4>
-                                                {reversals === true && reversalValues[i] === true && (
-                                                    <>
-                                                        <p>Remember: This card is reversed! Negate the following meaning.</p>
-                                                    </>
-                                                )}
-                                                <p className='readingParagraph'>{card.meaningYesNo}</p>
-                                            </>
-                                        )}
-                                    </div>
+                                    <ReadingCardSection
+                                        key={i}
+                                        index={i}
+                                        card={card}
+                                        spread={spread}
+                                        reading={createdReading}
+                                        selectedDeck={formDeck}
+                                        annotations={createdReading.annotations}
+                                        onDeleteNote={handleDeleteAnnotationNote}
+                                        onEditNote={handleEditAnnotationNote}
+                                        onSelectAnnotation={selectAnnotationAndOpenToolbar}
+                                        focusedAnnotationId={focusedAnnotationId}
+                                        isMobile={isMobile}
+                                    />
                                 );
                             })}
                             {spread !== null && spread.numPulls > 1 && (
-                            <>
-                                <h3 id={`combined`} className="sectionHeading">Combined</h3>
-
-                                {relations.map((relation, rIdx) => (
-                                    <div key={rIdx} className="combinedRelation">
-                                        <h4 id={`relationName${rIdx}`} className="subHeading">
-                                            {relation.cards
-                                                .map(cardId => {
-                                                    const card = cards.find(c => c.id === cardId);
-                                                    return card ? card.name : 'Unknown card';
-                                                })
-                                                .join(' & ')
-                                            }
-                                        </h4>
-                                        <p className='readingParagraph'>{relation.description}</p>
-                                        {topic !== 'General' && ((topic === 'Advice' && relation.descriptionAdvice) ||
-                                            (topic === 'Love & Relationships' && relation.descriptionLove) ||
-                                            (topic === 'Career' && relation.descriptionCareer)) && (
-                                            <>
-                                            <h4 id={`relationSpecMeaning${rIdx}`} className="subHeading">
-                                                {relation.cards
-                                                    .map(cardId => {
-                                                        const card = cards.find(c => c.id === cardId);
-                                                        return card ? card.name : 'Unknown card';
-                                                    })
-                                                    .join(' & ')
-                                                } in {topic}
-                                            </h4>
-                                            {topic === "Advice" && relation.descriptionAdvice !== "" ? (
-                                                <p className='readingParagraph'>{relation.descriptionAdvice}</p>
-                                            ) : topic === "Love & Relationships" && relation.descriptionLove !== "" ? (
-                                                <p className='readingParagraph'>{relation.descriptionLove}</p>
-                                            ) : topic === "Career" && relation.descriptionCareer !== "" ? (
-                                                <p className='readingParagraph'>{relation.descriptionCareer}</p>
-                                            ): (<p></p>)}
-                                            </>
-                                        )}
-                                    </div>
-                                ))}
-                            </>
-                        )}
+                                <CombinedRelationsSection
+                                    reading={createdReading}
+                                    relations={relations}
+                                    cards={cards}
+                                    annotations={createdReading.annotations}
+                                    onDeleteNote={handleDeleteAnnotationNote}
+                                    onEditNote={handleEditAnnotationNote}
+                                    onSelectAnnotation={selectAnnotationAndOpenToolbar}
+                                    focusedAnnotationId={focusedAnnotationId}
+                                    isMobile={isMobile}
+                                />
+                            )}
+                            <NotesSection
+                                notes={createdReading.notes}
+                                editing={editingNotes}
+                                editedNotes={editedNotes}
+                                onStartEdit={() => {
+                                    setEditedNotes(createdReading.notes ?? "");
+                                    setEditingNotes(true);
+                                }}
+                                onChangeEditedNotes={setEditedNotes}
+                                onSave={handleSaveNotes}
+                            />
                         </div>
                         </>
                     )}
                 </div>
             </div>
+
+            {pendingSelection && (
+                <AnnotationToolbar
+                    pendingSelection={pendingSelection}
+                    toolbarRef={toolbarRef}
+                    activeAnnotation={activeAnnotation}
+                    isHiddenActive={isHiddenActive}
+                    isStrikethroughActive={isStrikethroughActive}
+                    isHighlightActive={isHighlightActive}
+                    isNoteActive={isNoteActive}
+                    highlightSubmenuOpen={highlightSubmenuOpen}
+                    setHighlightSubmenuOpen={setHighlightSubmenuOpen}
+                    noteSubmenuOpen={noteSubmenuOpen}
+                    setNoteSubmenuOpen={setNoteSubmenuOpen}
+                    onHide={() => handleHide(pendingSelection)}
+                    onStrikethrough={() => handleStrikethrough(pendingSelection)}
+                    onHighlight={color => handleHighlight(pendingSelection, color)}
+                    onSaveNote={noteText => handleNote(pendingSelection, noteText)}
+                    isMobile={isMobile}
+                />
+            )}
+
             <Modal title={`Choose Card for Reading`} showModal={modalOpen} setShowModal={setModalOpen}>
                 <SelectCardPage
                     showModal={modalOpen}
@@ -767,21 +653,49 @@ function ReadingsPanel({ user, selectedDeck, showAlert, setLoading, token, Icon 
                         setSelectedCards(newC);
                         setModalOpen(false);
                     }}
-                    selectedDeck={selectedDeck!}
+                    selectedDeck={formDeck!}
+                    selectedCard={selectedCards[modalCard]}
+                />
+            </Modal>
+            <Modal title="Choose Deck" showModal={deckModalOpen} setShowModal={setDeckModalOpen}>
+                <SelectDeckPage
+                    showModal={deckModalOpen}
+                    decks={decks}
+                    setDeck={(deck) => {
+                        deckOverriddenRef.current = true;
+                        setFormDeck(deck);
+                        setDeckModalOpen(false);
+                    }}
+                    selectedDeck={formDeck}
+                />
+            </Modal>
+            <Modal title="Choose Spread" showModal={spreadModalOpen} setShowModal={setSpreadModalOpen}>
+                <SelectSpreadPage
+                    showModal={spreadModalOpen}
+                    spreads={spreads}
+                    setSpread={(s) => {
+                        setSelectedSpreadId(s.id);
+                        setSpreadModalOpen(false);
+                    }}
+                    selectedSpread={spread}
+                    CardIcon={CardIcon}
                 />
             </Modal>
             <Modal title="Info" showModal={showInfoModal} setShowModal={setShowInfoModal}>
                 <InfoPage infoMessages={[
-                    `Welcome to the Readings Page! `,
-                    `The readings generated here are NOT full readings. That requires a human reader! This is just a fun and easy way to start readings, learn more about them, and keep track of them in your account! `,
-                    `Manual drawings allow you to draw cards physically, and select the cards here for the reading. Virtual drawings generate cards randomly for you!`,
-                    `Choose a reading spread using the select. Go to the Spreads page to learn more about the different spread options!`,
-                    `Cards can have different meanings if reversed. Choose whether reversals are allowed in this reading using the checkbox.`,
-                    `Click download at the top of your reading to download as a pdf!`,
-                    `This reading uses cards from the currently selected deck. The default selected deck is the Rider-Waite Deck. You are logged in, go to the Decks page to select a different deck.`,
-                    user !== null ? 
-                        `You're logged in! Any readings you create here will be automatically saved to your account! Go to the account page to view past readings, and keep notes on them!` :
-                        `Anyone can create new readings and download them as PDFs, but only logged in users can save them to their account! You are not logged in. Go log in to save, view, and keep notes on your readings! `
+                    `Welcome to the Readings Page!`,
+                    `The readings generated here are NOT full readings, that requires a human reader! This is just a fun, easy way to start readings, learn more about them, and keep track of them in your account.`,
+                    `Manual drawings let you physically draw cards and select them here; Virtual drawings draw random cards for you.`,
+                    `Choose a spread using the select. Visit the Spreads page to learn more about each option.`,
+                    `Cards can have different meanings when reversed. Use the checkbox to allow reversals in this reading.`,
+                    `This reading uses cards from the deck input, which defaults to your currently selected deck. Change it here if you want a different one for this reading.`,
+                    `Select text anywhere in the reading to hide, strike through, highlight, or add a note. A popup menu will appear with your options. Headings and selections spanning more than one section can't be annotated. Adding a note always applies a highlight too. Choose from 5 highlight colors. Notes will appear in a small column next to the text they're attached to.`,
+                    `A general notes section is also available at the bottom of each reading.`,
+                    `Click Download at the top of your reading to save it with your notes and annotations applied as a PDF.`,
+                    `Anyone can create readings and add annotations. They're saved or discarded along with the rest of the reading depending on whether you're logged in.`,
+                    user === null
+                        ? `You're not logged in. Log in to save readings, revisit them, and keep adding notes and annotations.`
+                        : `You're logged in, so readings you create are saved automatically to your account — visit the Account page anytime to revisit them and add or edit annotations and notes.`
                 ]} />
             </Modal>
         </>
