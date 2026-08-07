@@ -152,7 +152,15 @@ export function useAnnotationSelection(
       return
     }
 
-    const range = selection.getRangeAt(0)
+    showToolbarForRange(selection.getRangeAt(0))
+  }
+
+  /**
+   * Shared by both the mouse-based open-range branch of handleTextSelection
+   * above and the touch-based selectionchange listener below — everything
+   * from here down is agnostic to how the selection was made.
+   */
+  const showToolbarForRange = (range: Range): void => {
     const selectedText = range.toString()
 
     if (selectedText.trim() === '') {
@@ -274,6 +282,52 @@ export function useAnnotationSelection(
     document.addEventListener('mousedown', handleMouseDown)
     return () => document.removeEventListener('mousedown', handleMouseDown)
   }, [])
+
+  // Mobile text selection is made via a long-press + native drag handles —
+  // that UI is the browser's own overlay, not part of our DOM, so it never
+  // fires mousedown/mouseup on the container the way a mouse drag does.
+  // handleTextSelection (wired to onMouseUp in the panels) simply never
+  // runs on touch as a result — nothing was broken, there was just no event
+  // to react to in the first place.
+  //
+  // selectionchange is the one event that reliably fires for ANY selection
+  // change regardless of input method, including adjusting the native
+  // handles — so it's the standard way to detect a touch selection.
+  // Debounced, since it fires continuously while a handle is being dragged;
+  // only act once it's settled, mirroring how mouseup only fires once a
+  // mouse-drag gesture finishes.
+  //
+  // Scoped to touch-capable devices only — desktop already has a working,
+  // deliberately mouseup-gated flow (showing the toolbar only once the
+  // drag finishes), and running this unscoped would also fire on desktop,
+  // popping the toolbar up mid-drag after any 300ms pause instead of
+  // waiting for mouseup.
+  useEffect(() => {
+    if (!('ontouchstart' in window)) return
+
+    let debounceId: ReturnType<typeof setTimeout> | null = null
+    const SELECTION_SETTLE_DELAY_MS = 300
+
+    const handleSelectionChange = () => {
+      if (debounceId) clearTimeout(debounceId)
+      debounceId = setTimeout(() => {
+        const selection = window.getSelection()
+        if (!selection || selection.isCollapsed || selection.rangeCount === 0) return
+
+        const anchorNode = selection.anchorNode
+        if (!anchorNode || !containerRef.current?.contains(anchorNode)) return
+
+        showToolbarForRange(selection.getRangeAt(0))
+      }, SELECTION_SETTLE_DELAY_MS)
+    }
+
+    document.addEventListener('selectionchange', handleSelectionChange)
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange)
+      if (debounceId) clearTimeout(debounceId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reading])
 
   useEffect(() => {
     setHighlightSubmenuOpen(false)

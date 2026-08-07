@@ -136,29 +136,34 @@ function App() {
     };
   }, [showOverlay]);
 
+  // Covers the app's initial bootstrap fetch with the global Loader — without
+  // this, the page renders immediately with no cards/decks yet, then every
+  // image on the page fires its request at once the moment both resolve and
+  // paints in raw/unmasked (very visible on a cold start, e.g. a serverless
+  // DB waking up right after a fresh deploy).
   useEffect(() => {
-    fetch('/api/cards')
-      .then(res => res.json())
-      .then((data: Card[]) => setCards(data))
-      .catch(err => console.error('Failed to fetch cards:', err));
-  }, []);
+    setLoading(true);
 
-  useEffect(() => {
-    fetch('/api/decks')
-      .then(res => res.json())
-      .then(data => {
-        setDecks(data);
+    Promise.all([
+      fetch('/api/cards').then(res => res.json()),
+      fetch('/api/decks').then(res => res.json()),
+    ])
+      .then(([cardsData, decksData]: [Card[], Deck[]]) => {
+        setCards(cardsData);
+        setDecks(decksData);
 
         // don't override a deck being restored for a logged-in user
         const hasSavedSession = localStorage.getItem('token') && localStorage.getItem('user');
 
         if (selectedDeck === null && !hasSavedSession) {
-          const riderWaite = data.find(
+          const riderWaite = decksData.find(
             (deck: Deck) => deck.name?.replace(/[–—]/g, "-") === "Rider-Waite"
           );
-          setSelectedDeck(riderWaite ?? data[0]);
+          setSelectedDeck(riderWaite ?? decksData[0]);
         }
-      });
+      })
+      .catch(err => console.error('Failed to fetch cards/decks:', err))
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
