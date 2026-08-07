@@ -11,6 +11,7 @@ import { faCircleInfo, faChevronDown, faXmark } from '@fortawesome/free-solid-sv
 import SparkleCheckbox from '../components/SparkleCheckbox'
 import Modal from '../components/Modal'
 import InfoPage from '../components/InfoPage'
+import Loader from '../components/Loader'
 
 interface CardsPanelProps {
   user: User | null
@@ -109,6 +110,47 @@ function CardsPanel({ user, selectedDeck, cards, isMobile }: CardsPanelProps){
     'Swords',
     ];
 
+    // The first non-empty suit, independent of search/filter state — this is
+    // deliberately NOT derived from groupedCards below, since that's
+    // recomputed on every keystroke/filter change and we don't want the
+    // loader gating on any of that, only on the deck actually being ready.
+    const firstSuitCards = useMemo(() => {
+        for (const suit of suitOrder) {
+            const suitCards = cards.filter((card) => card.type === suit);
+            if (suitCards.length > 0) return suitCards;
+        }
+        return [];
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cards]);
+
+    // Rather than blocking on every card image on the page (slow) or not
+    // blocking at all (the raw top-to-bottom streaming artifact this whole
+    // thing is meant to avoid), wait only on the first suit section's
+    // images — the natural "first screenful" boundary — then let the rest
+    // fade in individually as the user scrolls (see MiniCard's own
+    // onLoad-gated fade-in).
+    const [firstSectionReady, setFirstSectionReady] = useState(false);
+
+    useEffect(() => {
+        if (!selectedDeck || firstSuitCards.length === 0) return;
+
+        setFirstSectionReady(false);
+        let cancelled = false;
+
+        const preloads = firstSuitCards.map((card) => new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => resolve(); // don't hang the loader on one broken image
+            img.src = `${selectedDeck.images['card-front']}/${card.type.replaceAll(' ', '')}/${card.nameShort}.png`;
+        }));
+
+        Promise.all(preloads).then(() => {
+            if (!cancelled) setFirstSectionReady(true);
+        });
+
+        return () => { cancelled = true; };
+    }, [firstSuitCards, selectedDeck]);
+
     const normalizedSearch = searchText.trim().toLowerCase();
 
     const matchesSearch = (card: Card) => {
@@ -152,6 +194,7 @@ function CardsPanel({ user, selectedDeck, cards, isMobile }: CardsPanelProps){
 
     return (
         <>
+            {!firstSectionReady && <Loader/>}
             <div className='panel'>
                 <div className='panelTitle'>
                     <button className='infoBtn' onClick={()=>setShowInfoModal(true)}><FontAwesomeIcon icon={faCircleInfo}></FontAwesomeIcon></button>

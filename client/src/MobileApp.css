@@ -260,6 +260,18 @@
         width: 60% !important;
     }
 
+    /* Raises the annotation toolbar further above the selection than the
+       8px desktop gap (see AnnotationToolbar.tsx) — the browser's own
+       native selection action bar (Copy/Share) sits just above the
+       selection on mobile too, at roughly this height, and the two
+       overlapped at the smaller desktop gap. Tune this value up/down if it
+       still overlaps or ends up with too much empty space on your actual
+       device — native action bar height varies by OS/browser and isn't
+       something CSS/JS can measure directly. */
+    .annotationToolbar{
+        --annotation-toolbar-gap: 56px;
+    }
+
     /* Inline note toggle: sits right after its annotated passage instead of
        the desktop side-rail NotesPanel, which doesn't fit on narrow screens. */
     .inlineNoteToggleBtn{

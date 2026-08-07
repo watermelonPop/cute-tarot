@@ -72,6 +72,13 @@ function useEvenLineClamp(childCount: number) {
 function MiniCard({ selectedDeck, card}: MiniCardProps) {
     const navigate = useNavigate()
     const { groupRef, itemStyle } = useEvenLineClamp(2)
+    // The app's own loader only ever covered the /api/cards+/api/decks
+    // fetch, not the actual image bytes — so the moment it clears, ~78 of
+    // these mount at once and each one paints in raw as its bytes stream
+    // over the network, top to bottom, looking broken. Fading each image in
+    // only once it's actually finished loading (rather than showing it
+    // mid-decode) hides that same artifact at the per-image level instead.
+    const [imgLoaded, setImgLoaded] = useState(false)
 
     if (!selectedDeck || !card) {
         return <p>Loading</p>
@@ -92,8 +99,10 @@ function MiniCard({ selectedDeck, card}: MiniCardProps) {
                     <div className='cardImgOuter'>
                         <img
                             src={`${selectedDeck.images['card-front']}/${card.type.replaceAll(" ", "")}/${card.nameShort}.png`}
-                            className="cardImg"
+                            className={`cardImg${imgLoaded ? ' loaded' : ''}`}
                             alt={`${card.name}`}
+                            onLoad={() => setImgLoaded(true)}
+                            onError={() => setImgLoaded(true)}
                         />
                     </div>
                 </div>

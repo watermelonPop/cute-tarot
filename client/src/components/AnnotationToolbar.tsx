@@ -113,7 +113,13 @@ function AnnotationToolbar({
         position: 'fixed',
         top: pendingSelection.toolbarY,
         left: pendingSelection.toolbarX,
-        transform: 'translate(-50%, calc(-100% - 8px))',
+        // The 8px gap is the desktop default — on mobile it needs to be much
+        // bigger, since the browser's own native selection action bar
+        // (Copy/Share) sits just above the selection too and otherwise
+        // overlaps our toolbar. Expressed as a CSS var (with the same 8px
+        // fallback) so MobileApp.css can override just the gap without this
+        // needing to know about screen size itself.
+        transform: 'translate(-50%, calc(-100% - var(--annotation-toolbar-gap, 8px)))',
       }}
     >
       <button className={`annotationToolbarBtn${isHiddenActive ? ' active' : ''}`} onClick={onHide}>

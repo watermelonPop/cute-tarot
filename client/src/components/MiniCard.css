@@ -99,6 +99,17 @@
   height: auto;
   object-fit: contain;
   border-radius: var(--border-radius-small);
+
+  /* Stays invisible while its bytes are still streaming in — any partial
+     top-to-bottom paint happens here, hidden — then fades in only once
+     fully loaded (see MiniCard.tsx's onLoad), instead of the raw
+     progressive-render artifact being visible the whole time. */
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.cardImg.loaded {
+  opacity: 1;
 }
 
 .cardTitle {
