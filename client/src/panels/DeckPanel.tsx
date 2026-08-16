@@ -33,6 +33,7 @@ function DeckPanel({ user, selectedDeck, decks, setDecks, cards, setUserSelected
 
     const [editableDeck, setEditableDeck] = useState<Deck | null>(null);
     const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
+    const [backImgLoaded, setBackImgLoaded] = useState<boolean>(false);
 
     const currentDeck = deckName ? decks.find(c => c.name === deckName) : null
     const theme = getDeckTheme(currentDeck?.name)
@@ -190,7 +191,7 @@ function DeckPanel({ user, selectedDeck, decks, setDecks, cards, setUserSelected
                     <div className="modalCardFace">
                         <div className='modalCardImgOuter'>
                             <div className='cardImgOuter'>
-                                <SelectedIcon className="cardImg" style={{backgroundColor: theme['main-background'], color: theme['accent-background']}}/>
+                                 <SelectedIcon className="cardImg loaded" style={{backgroundColor: theme['main-background'], color: theme['accent-background']}}/>
                             </div>
                         </div>
                         <p className="cardDesc">
@@ -202,8 +203,10 @@ function DeckPanel({ user, selectedDeck, decks, setDecks, cards, setUserSelected
                             <div className='cardImgOuter'>
                                 <img
                                     src={`${currentDeck?.images['card-back']}`}
-                                    className="cardImg"
+                                    className={`cardImg${backImgLoaded ? ' loaded' : ''}`}
                                     alt={`Deck back`}
+                                    onLoad={() => setBackImgLoaded(true)}
+                                    onError={() => setBackImgLoaded(true)}
                                 />
                             </div>
                         </div>
