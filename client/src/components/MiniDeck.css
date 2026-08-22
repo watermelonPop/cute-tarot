@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   column-gap: 1rem;
-  row-gap: 1.5rem;
+  row-gap: 2rem;
   /* align-items removed — grid's default "stretch" behavior is what we want now */
 
   width: 95%;
